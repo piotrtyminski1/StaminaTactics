@@ -1,0 +1,2619 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Turniej 3v3</title>
+  <style>
+    @font-face {
+      font-display: fallback;
+      font-family: Audiowide;
+      font-style: normal;
+      font-weight: 400;
+      src: url("https://fonts.gstatic.com/s/audiowide/v22/l7gdbjpo0cum0ckerWCtkQ.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-display: fallback;
+      font-family: FS Numbers;
+      font-style: normal;
+      font-weight: 800;
+      src: local("FS Numbers"), local("FSNumbers"), local("Arial Black");
+    }
+
+    @font-face {
+      font-display: fallback;
+      font-family: LivesportFinderLatin;
+      font-style: normal;
+      font-weight: 400;
+      src: url("https://static.flashscore.com/res/font/LivesportFinderLatin-Regular_Static.woff2") format("woff2");
+    }
+
+    @font-face {
+      font-display: fallback;
+      font-family: LivesportFinderLatin;
+      font-style: normal;
+      font-weight: 700;
+      src: url("https://static.flashscore.com/res/font/LivesportFinderLatin-Bold_Static.woff2") format("woff2");
+    }
+
+    @font-face {
+      font-display: fallback;
+      font-family: LivesportFinderLatin;
+      font-style: normal;
+      font-weight: 800;
+      src: url("https://static.flashscore.com/res/font/LivesportFinderLatin-Extrabold.woff2") format("woff2");
+    }
+
+    :root {
+      color-scheme: dark;
+      --bg: #00141e;
+      --panel: #00141e;
+      --panel-2: #0f2d37;
+      --panel-3: #010a0f;
+      --line: #0f2d37;
+      --line-soft: rgba(15, 45, 55, .9);
+      --text: #eeeeee;
+      --muted: #c8cdcd;
+      --muted-2: #808e93;
+      --accent: #ff0046;
+      --accent-dark: #c80037;
+      --accent-soft: rgba(255, 0, 70, .16);
+      --green: #00a83f;
+      --red: #dc0000;
+      --draw: #f3a000;
+      --focus: #ff0046;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: LivesportFinderLatin, Arial, sans-serif;
+      background:
+        linear-gradient(180deg, #00141e 0, #010a0f 170px),
+        var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: 0 0 max(10px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell {
+      min-height: 100dvh;
+      background: var(--panel-3);
+      overflow: hidden;
+    }
+
+    .topbar {
+      position: relative;
+      padding: max(12px, env(safe-area-inset-top)) 8px 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar.is-hidden {
+      display: none;
+    }
+
+    .brand-logo {
+      padding: 8px 2px 2px;
+      font-family: Audiowide, LivesportFinderLatin, Arial, sans-serif;
+      font-size: 19px;
+      line-height: 24px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .settings-trigger {
+      position: absolute;
+      top: max(14px, env(safe-area-inset-top));
+      left: 8px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .brand-logo span {
+      color: var(--accent);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 34px;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+
+    .total {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 0 8px;
+    }
+
+    .tab {
+      min-height: 30px;
+      border: 0;
+      border-radius: 6px;
+      color: #d6e5e9;
+      background: var(--panel-2);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .tab + .tab {
+      border-left: 0;
+    }
+
+    .tab.is-active {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.is-active {
+      display: block;
+    }
+
+    .settings-panel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      padding: max(16px, env(safe-area-inset-top)) 8px max(16px, env(safe-area-inset-bottom));
+      background: rgba(1, 10, 15, .78);
+    }
+
+    .settings-panel.is-visible {
+      display: grid;
+      align-items: start;
+    }
+
+    .settings-card {
+      width: 100%;
+      max-width: 414px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .34);
+    }
+
+    .settings-head {
+      min-height: 40px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 28px;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+      background: rgba(1, 10, 15, .42);
+      color: var(--text);
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .settings-head span {
+      min-width: 0;
+      text-align: center;
+    }
+
+    .settings-back,
+    .settings-close {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .settings-back.is-hidden {
+      visibility: hidden;
+    }
+
+    .settings-form {
+      display: grid;
+      gap: 1px;
+      background: rgba(85, 94, 97, .24);
+    }
+
+    .settings-view {
+      display: none;
+    }
+
+    .settings-view.is-active {
+      display: block;
+    }
+
+    .setting-row {
+      min-height: 54px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 88px;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: var(--panel);
+    }
+
+    .setting-row.toggle-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .setting-label {
+      color: var(--text);
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 700;
+    }
+
+    .setting-hint {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 12px;
+      margin-top: 2px;
+    }
+
+    .setting-input {
+      width: 88px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-3);
+      color: var(--text);
+      text-align: center;
+      outline: none;
+      font-size: 15px;
+      line-height: 18px;
+      font-weight: 800;
+      appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .setting-select {
+      cursor: pointer;
+      background:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 14px) 14px / 5px 5px no-repeat,
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 9px) 14px / 5px 5px no-repeat,
+        var(--panel-3);
+      padding-right: 22px;
+      -moz-appearance: none;
+    }
+
+    .setting-input::-webkit-outer-spin-button,
+    .setting-input::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .setting-input:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .setting-action {
+      width: 100%;
+      min-height: 34px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .player-editor {
+      display: grid;
+      gap: 1px;
+      background: rgba(85, 94, 97, .24);
+    }
+
+    .player-profile {
+      display: grid;
+      gap: 10px;
+      padding: 10px;
+      background: var(--panel);
+    }
+
+    .player-profile-top {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-preview {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, .35);
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .28);
+    }
+
+    .profile-name-input {
+      width: 100%;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-3);
+      color: var(--text);
+      outline: none;
+      padding: 0 9px;
+      font-size: 13px;
+      line-height: 16px;
+      font-weight: 700;
+    }
+
+    .profile-name-input:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .profile-colors {
+      display: none;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 5px;
+    }
+
+    .profile-colors.is-open {
+      display: grid;
+    }
+
+    .profile-color {
+      width: 100%;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .28);
+    }
+
+    .profile-color:disabled {
+      cursor: not-allowed;
+      opacity: .28;
+    }
+
+    .profile-color.is-active {
+      border-color: #fff;
+      box-shadow:
+        0 0 0 2px var(--accent),
+        inset 0 0 0 1px rgba(0, 0, 0, .28);
+    }
+
+    .settings-error {
+      display: none;
+      padding: 9px 10px;
+      background: rgba(255, 0, 70, .14);
+      color: var(--text);
+      border-top: 1px solid rgba(255, 0, 70, .32);
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .settings-error.is-visible {
+      display: block;
+    }
+
+    .toggle {
+      width: 46px;
+      height: 26px;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toggle span {
+      width: 46px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--panel-3);
+      border: 1px solid var(--line);
+      transition: background .16s ease, border-color .16s ease;
+    }
+
+    .toggle span::before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .toggle input:checked + span {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle input:checked + span::before {
+      transform: translateX(20px);
+      background: #fff;
+    }
+
+    .matches {
+      display: grid;
+      gap: 10px;
+      padding: 8px 8px 10px;
+      background: var(--panel-3);
+    }
+
+    .match-round {
+      overflow: hidden;
+      background: var(--bg);
+      border-radius: 7px 7px 0 0;
+    }
+
+    .match-round-title {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .match {
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+    }
+
+    .match:last-child {
+      border-bottom: 0;
+    }
+
+    .match-result-row {
+      display: grid;
+      grid-template-columns: 66px minmax(0, 1fr) 1px;
+      gap: 9px;
+      align-items: stretch;
+      padding: 7px 8px 7px 9px;
+    }
+
+    .match-result-row::after {
+      content: "";
+      width: 1px;
+      min-height: 44px;
+      align-self: center;
+      background: var(--line);
+    }
+
+    .match-meta {
+      min-width: 0;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .match-meta-duration,
+    .match-meta-status {
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 11px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .match-meta-status {
+      color: var(--accent);
+    }
+
+    .match-teams {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .match-team-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) 24px;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .match-team-row.is-winner .team-players {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .team-flag {
+      width: 18px;
+      aspect-ratio: 3 / 2;
+      display: grid;
+      overflow: hidden;
+      border: 1px solid rgba(238, 238, 238, .18);
+      border-radius: 4px;
+      background: #eee;
+    }
+
+    .team-flag.vertical {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .team-flag.horizontal {
+      grid-template-rows: repeat(3, 1fr);
+    }
+
+    .team-flag span {
+      min-width: 0;
+    }
+
+    .team-players {
+      min-width: 0;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12.5px;
+      line-height: 17px;
+      font-weight: 400;
+    }
+
+    .score,
+    .detail-score,
+    .detail-score-input {
+      font-family: Audiowide, FS Numbers, LivesportFinderLatin, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-weight: 400;
+    }
+
+    .score {
+      display: inline-grid;
+      grid-template-columns: 32px 7px 32px;
+      align-items: center;
+      gap: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 14px;
+      font-weight: 800;
+    }
+
+    .score-value {
+      min-width: 20px;
+      color: var(--text);
+      text-align: center;
+      font-family: LivesportFinderLatin, Arial, sans-serif;
+      font-size: 12.5px;
+      line-height: 17px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-value.empty {
+      color: var(--muted-2);
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, .35);
+      flex: 0 0 auto;
+    }
+
+    .actions {
+      padding: 2px 8px 10px;
+      background: var(--bg);
+    }
+
+    .clear {
+      width: 100%;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--text);
+      background: var(--panel-2);
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .table-wrap {
+      overflow-x: hidden;
+      padding: 8px;
+      background: var(--bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      overflow: hidden;
+      background: var(--panel);
+      border-radius: var(--radius);
+    }
+
+    th,
+    td {
+      height: 38px;
+      padding: 0 7px;
+      text-align: left;
+      font-size: 11px;
+      line-height: 14px;
+      white-space: nowrap;
+      border-bottom: 1px solid rgba(85, 94, 97, .24);
+    }
+
+    th {
+      height: 30px;
+      color: var(--muted);
+      background: rgba(1, 10, 15, .48);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: var(--text);
+    }
+
+    .rank {
+      width: 22px;
+      color: var(--muted);
+      text-align: center;
+      padding-inline: 3px;
+    }
+
+    .name-cell {
+      width: 74px;
+    }
+
+    .name {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      font-weight: 700;
+    }
+
+    .name span:last-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .name .swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+    }
+
+    .stat {
+      color: var(--muted);
+      text-align: center;
+      width: 25px;
+    }
+
+    .points {
+      font-weight: 800;
+      color: var(--text);
+      text-align: center;
+      width: 32px;
+    }
+
+    .form {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .form-chip {
+      width: 16px;
+      height: 16px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 9px;
+      line-height: 10px;
+      font-weight: 800;
+    }
+
+    .form-cell {
+      width: 88px;
+    }
+
+    .form-chip.win {
+      background: var(--green);
+    }
+
+    .form-chip.loss {
+      background: var(--red);
+    }
+
+    .form-chip.draw {
+      background: var(--draw);
+      color: #00141e;
+    }
+
+    .empty-form {
+      color: var(--muted-2);
+      font-size: 12px;
+    }
+
+    .standings-footer {
+      margin: 0 8px 8px;
+      padding: 10px 12px;
+      background: var(--panel);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .detail-screen {
+      min-height: 100dvh;
+      background: var(--bg);
+    }
+
+    .scoreboard {
+      min-height: 304px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-items: center;
+      align-content: center;
+      column-gap: 8px;
+      row-gap: 12px;
+      padding: max(28px, env(safe-area-inset-top)) 12px 22px;
+      background: var(--panel);
+      border-top: 1px solid rgba(255, 255, 255, .04);
+      border-bottom: 1px solid var(--panel-3);
+    }
+
+    .scoreboard-team {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+    }
+
+    .flag-card {
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .flag-card .team-flag {
+      width: 54px;
+      border-color: rgba(0, 20, 30, .2);
+      border-radius: 5px;
+    }
+
+    .scoreboard-name {
+      width: 100%;
+      color: var(--text);
+      overflow: hidden;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: 700;
+    }
+
+    .scoreboard-strength {
+      margin-top: -8px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .scoreboard-center {
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+    }
+
+    .timer-label {
+      min-height: 18px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .detail-score {
+      display: grid;
+      grid-template-columns: 42px 14px 42px;
+      align-items: center;
+      gap: 4px;
+      color: var(--text);
+      font-size: 22px;
+      line-height: 28px;
+      font-weight: 800;
+    }
+
+    .detail-score-input {
+      width: 42px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-3);
+      color: var(--text);
+      text-align: center;
+      font-size: 30px;
+      line-height: 34px;
+      font-weight: 800;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .detail-score-input:disabled {
+      color: var(--muted-2);
+      opacity: 1;
+    }
+
+    .detail-score-input:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .detail-score-input::-webkit-outer-spin-button,
+    .detail-score-input::-webkit-inner-spin-button {
+      margin: 0;
+      -webkit-appearance: none;
+    }
+
+    .timer-display {
+      color: var(--accent);
+      margin-top: 8px;
+      font-size: 40px;
+      line-height: 46px;
+      font-weight: 800;
+    }
+
+    .first-leg-result {
+      grid-column: 1 / -1;
+      justify-self: center;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      max-width: 132px;
+      min-height: 22px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: rgba(0, 44, 58, .88);
+      color: var(--text);
+      text-align: center;
+      font-size: 9px;
+      line-height: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .first-leg-result.is-visible {
+      display: inline-flex;
+    }
+
+    .first-leg-result::before {
+      content: "i";
+      width: 13px;
+      height: 13px;
+      margin-right: 4px;
+      display: inline-grid;
+      place-items: center;
+      border: 1.5px solid currentColor;
+      border-radius: 50%;
+      font-size: 9px;
+      line-height: 10px;
+      font-weight: 900;
+      font-family: Arial, sans-serif;
+    }
+
+    .prediction-panel {
+      display: grid;
+      gap: 0;
+      margin: 8px 0;
+      background: var(--panel-3);
+      overflow: hidden;
+    }
+
+    .prediction-odds-head {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr));
+      padding: 0 8px;
+      background: linear-gradient(180deg, #00313b 0%, #002833 100%);
+    }
+
+    .prediction-odds-head span {
+      min-height: 28px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .prediction-grid {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 8px;
+      background: var(--panel-3);
+    }
+
+    .prediction-bookmaker {
+      min-height: 38px;
+    }
+
+    .prediction-item {
+      min-width: 0;
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      padding: 6px 8px;
+      border: 1px solid var(--muted);
+      border-radius: 8px;
+      background: var(--panel-3);
+      text-align: center;
+    }
+
+    .prediction-item.is-hit {
+      background: #f4ba59;
+      border-color: #f4ba59;
+    }
+
+    .prediction-item.is-hit .prediction-value {
+      color: #00141e;
+    }
+
+    .prediction-item.is-hit .prediction-odd {
+      color: rgba(0, 20, 30, .72);
+    }
+
+    .prediction-value {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 16px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .prediction-odd {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-actions {
+      display: grid;
+      gap: 8px;
+      padding: 10px 8px;
+      background: var(--bg);
+    }
+
+    .timer-controls {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .timer-controls.is-visible {
+      display: grid;
+    }
+
+    .primary-action,
+    .secondary-action,
+    .timer-control {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .timer-control {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .timer-control:disabled {
+      color: var(--muted-2);
+      cursor: default;
+      opacity: .72;
+    }
+
+    .primary-action {
+      background: var(--accent);
+    }
+
+    .primary-action:disabled {
+      background: var(--panel-2);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .secondary-action {
+      display: none;
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .secondary-action.is-visible {
+      display: block;
+    }
+
+    @media (max-width: 360px) {
+      .flag-card {
+        width: 70px;
+        height: 70px;
+        border-radius: 14px;
+      }
+
+      .flag-card .team-flag {
+        width: 50px;
+      }
+
+      .scoreboard-name {
+        font-size: 12px;
+        line-height: 15px;
+      }
+
+      .scoreboard-strength {
+        font-size: 9px;
+      }
+
+      .first-leg-result {
+        max-width: 120px;
+        font-size: 8px;
+      }
+
+      .match-result-row {
+        grid-template-columns: 58px minmax(0, 1fr) 1px;
+        gap: 5px;
+        padding-inline: 8px;
+      }
+
+      .match-team-row {
+        grid-template-columns: 18px minmax(0, 1fr) 20px;
+        gap: 5px;
+      }
+
+      .match-meta {
+        font-size: 9px;
+      }
+
+      .team-flag {
+        width: 18px;
+      }
+
+      .team-players {
+        font-size: 11px;
+      }
+
+      .score {
+        grid-template-columns: 30px 7px 30px;
+      }
+
+      .table-wrap {
+        padding-inline: 4px;
+      }
+
+      th,
+      td {
+        padding-inline: 3px;
+        font-size: 10px;
+      }
+
+      .name-cell {
+        width: 66px;
+      }
+
+      .stat {
+        width: 22px;
+      }
+
+      .points {
+        width: 28px;
+      }
+
+      .form-cell {
+        width: 82px;
+      }
+
+      .form-chip {
+        width: 15px;
+        height: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="shell">
+      <header class="topbar">
+        <button class="settings-trigger" type="button" id="settings-open" aria-label="Ustawienia">⚙</button>
+        <div class="brand-logo">STAMINA<span>TACTICS</span></div>
+        <div class="title-row">
+          <h1>Turniej 3v3</h1>
+          <div class="total" id="progress">0/20 wyników</div>
+        </div>
+        <nav class="tabs" aria-label="Widoki">
+          <button class="tab is-active" type="button" data-tab="matches">Mecze</button>
+          <button class="tab" type="button" data-tab="table">Tabela</button>
+        </nav>
+      </header>
+
+      <div class="settings-panel" id="settings-panel" aria-hidden="true">
+        <section class="settings-card" aria-label="Ustawienia turnieju">
+          <div class="settings-head">
+            <button class="settings-back is-hidden" type="button" id="settings-back" aria-label="Wróć">‹</button>
+            <span id="settings-title">Ustawienia</span>
+            <button class="settings-close" type="button" id="settings-close" aria-label="Zamknij">×</button>
+          </div>
+          <section class="settings-view is-active" id="settings-main-view">
+            <form class="settings-form" id="settings-form">
+              <label class="setting-row">
+                <span>
+                  <span class="setting-label">Czas gry</span>
+                  <span class="setting-hint">Minuty</span>
+                </span>
+                <input class="setting-input" id="setting-match-minutes" type="number" min="1" max="30" step="1" inputmode="numeric">
+              </label>
+              <label class="setting-row">
+                <span>
+                  <span class="setting-label">Odliczanie</span>
+                  <span class="setting-hint">Sekundy przed meczem</span>
+                </span>
+                <input class="setting-input" id="setting-countdown-seconds" type="number" min="0" max="60" step="1" inputmode="numeric">
+              </label>
+              <label class="setting-row">
+                <span>
+                  <span class="setting-label">Liczba piłkarzy</span>
+                  <span class="setting-hint">Zakres 4-7</span>
+                </span>
+                <select class="setting-input setting-select" id="setting-player-count">
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                </select>
+              </label>
+              <label class="setting-row toggle-row">
+                <span>
+                  <span class="setting-label">Dwumecze</span>
+                  <span class="setting-hint">Rewanże w terminarzu</span>
+                </span>
+                <span class="toggle">
+                  <input id="setting-double-legs" type="checkbox">
+                  <span></span>
+                </span>
+              </label>
+              <div class="setting-row">
+                <span>
+                  <span class="setting-label">Edytuj Piłkarzy</span>
+                  <span class="setting-hint">Nazwa i kolor profilu</span>
+                </span>
+                <button class="setting-action" type="button" id="edit-players">Edytuj</button>
+              </div>
+            </form>
+          </section>
+          <section class="settings-view" id="players-editor-view">
+            <div class="player-editor" id="player-editor"></div>
+          </section>
+          <div class="settings-error" id="settings-error" role="alert"></div>
+        </section>
+      </div>
+
+      <section class="screen is-active" id="matches-screen">
+        <div class="matches" id="matches"></div>
+        <div class="actions">
+          <button class="clear" type="button" id="clear-results">Wyczyść wyniki</button>
+        </div>
+      </section>
+
+      <section class="screen" id="table-screen">
+        <div class="table-wrap">
+          <table aria-label="Tabela turnieju">
+            <thead>
+              <tr>
+                <th class="rank">#</th>
+                <th class="name-cell">Piłkarz</th>
+                <th class="points">Pkt</th>
+                <th class="stat">W</th>
+                <th class="stat">D</th>
+                <th class="stat">L</th>
+                <th class="stat">GS</th>
+                <th class="stat">GC</th>
+                <th class="stat">+/-</th>
+                <th class="form-cell">Forma</th>
+              </tr>
+            </thead>
+            <tbody id="standings"></tbody>
+          </table>
+        </div>
+        <div class="standings-footer">
+          <span id="schedule-summary">20 meczów po 3 minuty</span>
+          <span>&rarr;</span>
+        </div>
+      </section>
+
+      <section class="screen detail-screen" id="detail-screen">
+        <div class="scoreboard">
+          <div class="scoreboard-team">
+            <div class="flag-card" id="detail-team1-flag"></div>
+            <div class="scoreboard-name" id="detail-team1-name"></div>
+            <div class="scoreboard-strength" id="detail-team1-strength"></div>
+          </div>
+          <div class="scoreboard-center">
+            <div class="timer-label" id="timer-label">Gotowy</div>
+            <div class="detail-score">
+              <input class="detail-score-input" id="detail-team1-score" inputmode="numeric" pattern="[0-9]*" min="0" max="99" type="number" aria-label="Bramki drużyny 1">
+              <span>-</span>
+              <input class="detail-score-input" id="detail-team2-score" inputmode="numeric" pattern="[0-9]*" min="0" max="99" type="number" aria-label="Bramki drużyny 2">
+            </div>
+            <div class="timer-display" id="timer-display">3:00</div>
+          </div>
+          <div class="scoreboard-team">
+            <div class="flag-card" id="detail-team2-flag"></div>
+            <div class="scoreboard-name" id="detail-team2-name"></div>
+            <div class="scoreboard-strength" id="detail-team2-strength"></div>
+          </div>
+          <div class="first-leg-result" id="first-leg-result" aria-live="polite"></div>
+        </div>
+        <section class="prediction-panel" aria-label="Predykcja wyniku">
+          <div class="prediction-odds-head">
+            <span>Kursy</span>
+            <span>1</span>
+            <span>X</span>
+            <span>2</span>
+          </div>
+          <div class="prediction-grid">
+            <div class="prediction-bookmaker" aria-hidden="true"></div>
+            <div class="prediction-item" id="prediction-item-a">
+              <strong class="prediction-value" id="prediction-team-a">0%</strong>
+              <span class="prediction-odd" id="prediction-odd-a">-</span>
+            </div>
+            <div class="prediction-item" id="prediction-item-draw">
+              <strong class="prediction-value" id="prediction-draw">0%</strong>
+              <span class="prediction-odd" id="prediction-odd-draw">-</span>
+            </div>
+            <div class="prediction-item" id="prediction-item-b">
+              <strong class="prediction-value" id="prediction-team-b">0%</strong>
+              <span class="prediction-odd" id="prediction-odd-b">-</span>
+            </div>
+          </div>
+        </section>
+        <div class="detail-actions">
+          <button class="primary-action" type="button" id="start-match">Start Mecz</button>
+          <div class="timer-controls" id="timer-controls">
+            <button class="timer-control" type="button" id="pause-match">Pauza</button>
+            <button class="timer-control" type="button" id="reset-match">Resetuj</button>
+          </div>
+          <button class="secondary-action" type="button" id="back-to-menu">Wróć do menu</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const players = [
+      { name: 'Tymek', color: '#ed263d' },
+      { name: 'Wałach', color: '#fbe247' },
+      { name: 'Bartek', color: '#0085ff' },
+      { name: 'Kamil', color: '#fdfdfd' },
+      { name: 'Soczek', color: '#00976a' },
+      { name: 'Kozon', color: '#020001' }
+    ];
+
+    const editablePlayers = [
+      ...players,
+      { name: 'Gracz 7', color: '#ff9100' }
+    ];
+
+    const editablePlayerMap = Object.fromEntries(editablePlayers.map(player => [player.name, player]));
+
+    const profileColorPalette = [
+      '#ed263d',
+      '#fbe247',
+      '#0085ff',
+      '#00976a',
+      '#ff9100',
+      '#651fff',
+      '#00e5ff',
+      '#fdfdfd',
+      '#020001'
+    ];
+
+    const firstRoundMatches = [
+      [['Tymek', 'Wałach', 'Bartek'], ['Kamil', 'Soczek', 'Kozon']],
+      [['Tymek', 'Wałach', 'Kamil'], ['Bartek', 'Soczek', 'Kozon']],
+      [['Bartek', 'Kamil', 'Kozon'], ['Tymek', 'Wałach', 'Soczek']],
+      [['Bartek', 'Kamil', 'Soczek'], ['Tymek', 'Wałach', 'Kozon']],
+      [['Wałach', 'Soczek', 'Kozon'], ['Tymek', 'Bartek', 'Kamil']],
+      [['Tymek', 'Bartek', 'Soczek'], ['Wałach', 'Kamil', 'Kozon']],
+      [['Wałach', 'Kamil', 'Soczek'], ['Tymek', 'Bartek', 'Kozon']],
+      [['Wałach', 'Bartek', 'Kozon'], ['Tymek', 'Kamil', 'Soczek']],
+      [['Tymek', 'Kamil', 'Kozon'], ['Wałach', 'Bartek', 'Soczek']],
+      [['Tymek', 'Soczek', 'Kozon'], ['Wałach', 'Bartek', 'Kamil']]
+    ];
+
+    const storageKey = 'stamina-tactics-3v3-results';
+    const flagStorageKey = 'stamina-tactics-3v3-flags';
+    const teamOrderStorageKey = 'stamina-tactics-3v3-team-orders';
+    const settingsStorageKey = 'stamina-tactics-3v3-settings';
+    const playerProfilesStorageKey = 'stamina-tactics-3v3-player-profiles';
+    const initialEloRating = 1000;
+    const eloKFactor = 16;
+    const oddsAggression = 1.25;
+    const clearFavoriteThreshold = 0.12;
+    const pointSignalWeight = 0.7;
+    const pointsProbabilityScale = 6;
+    const maxPointDiffSignal = 24;
+    let settings = loadSettings();
+    let matches = buildMatches();
+    const playerOrder = Object.fromEntries(players.map((player, index) => [player.name, index]));
+    let playerProfiles = loadPlayerProfiles();
+    let results = loadResults();
+    let flagOrientations = loadFlagOrientations();
+    let teamOrders = loadTeamOrders();
+    let activeMatchIndex = null;
+    let timerInterval = null;
+    let timerPhase = 'idle';
+    let countdownRemaining = settings.countdownDuration;
+    let matchRemaining = settings.matchDuration;
+    let pausedMatchStates = {};
+
+    const topbarEl = document.querySelector('.topbar');
+    const matchesEl = document.querySelector('#matches');
+    const standingsEl = document.querySelector('#standings');
+    const progressEl = document.querySelector('#progress');
+    const scheduleSummaryEl = document.querySelector('#schedule-summary');
+    const clearButton = document.querySelector('#clear-results');
+    const settingsOpenButton = document.querySelector('#settings-open');
+    const settingsCloseButton = document.querySelector('#settings-close');
+    const settingsBackButton = document.querySelector('#settings-back');
+    const settingsTitleEl = document.querySelector('#settings-title');
+    const settingsPanelEl = document.querySelector('#settings-panel');
+    const settingsFormEl = document.querySelector('#settings-form');
+    const settingsMainViewEl = document.querySelector('#settings-main-view');
+    const playersEditorViewEl = document.querySelector('#players-editor-view');
+    const settingsErrorEl = document.querySelector('#settings-error');
+    const matchMinutesInput = document.querySelector('#setting-match-minutes');
+    const countdownSecondsInput = document.querySelector('#setting-countdown-seconds');
+    const playerCountSelect = document.querySelector('#setting-player-count');
+    const doubleLegsInput = document.querySelector('#setting-double-legs');
+    const editPlayersButton = document.querySelector('#edit-players');
+    const playerEditorEl = document.querySelector('#player-editor');
+    const detailScreenEl = document.querySelector('#detail-screen');
+    const detailTeam1FlagEl = document.querySelector('#detail-team1-flag');
+    const detailTeam2FlagEl = document.querySelector('#detail-team2-flag');
+    const detailTeam1NameEl = document.querySelector('#detail-team1-name');
+    const detailTeam2NameEl = document.querySelector('#detail-team2-name');
+    const detailTeam1StrengthEl = document.querySelector('#detail-team1-strength');
+    const detailTeam2StrengthEl = document.querySelector('#detail-team2-strength');
+    const detailTeam1ScoreEl = document.querySelector('#detail-team1-score');
+    const detailTeam2ScoreEl = document.querySelector('#detail-team2-score');
+    const timerLabelEl = document.querySelector('#timer-label');
+    const timerDisplayEl = document.querySelector('#timer-display');
+    const firstLegResultEl = document.querySelector('#first-leg-result');
+    const predictionTeamAEl = document.querySelector('#prediction-team-a');
+    const predictionDrawEl = document.querySelector('#prediction-draw');
+    const predictionTeamBEl = document.querySelector('#prediction-team-b');
+    const predictionOddAEl = document.querySelector('#prediction-odd-a');
+    const predictionOddDrawEl = document.querySelector('#prediction-odd-draw');
+    const predictionOddBEl = document.querySelector('#prediction-odd-b');
+    const predictionItemAEl = document.querySelector('#prediction-item-a');
+    const predictionItemDrawEl = document.querySelector('#prediction-item-draw');
+    const predictionItemBEl = document.querySelector('#prediction-item-b');
+    const timerControlsEl = document.querySelector('#timer-controls');
+    const pauseMatchButton = document.querySelector('#pause-match');
+    const resetMatchButton = document.querySelector('#reset-match');
+    const startMatchButton = document.querySelector('#start-match');
+    const backToMenuButton = document.querySelector('#back-to-menu');
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return fallback;
+      return Math.max(min, Math.min(max, Math.round(number)));
+    }
+
+    function normalizeSettings(rawSettings = {}) {
+      const matchSeconds = clampNumber(rawSettings.matchDuration, 60, 1800, 180);
+      return {
+        matchDuration: Math.max(60, Math.min(1800, Math.round(matchSeconds / 60) * 60)),
+        countdownDuration: clampNumber(rawSettings.countdownDuration, 0, 60, 10),
+        playerCount: clampNumber(rawSettings.playerCount, 4, 7, 6),
+        doubleLegs: rawSettings.doubleLegs !== false
+      };
+    }
+
+    function loadSettings() {
+      try {
+        return normalizeSettings(JSON.parse(localStorage.getItem(settingsStorageKey)));
+      } catch {
+        return normalizeSettings();
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+    }
+
+    function isHexColor(value) {
+      return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[character]);
+    }
+
+    function normalizeColor(value) {
+      return typeof value === 'string' ? value.toLowerCase() : '';
+    }
+
+    function randomAvailableColor(usedColors) {
+      const availableColors = profileColorPalette.filter(color => !usedColors.has(normalizeColor(color)));
+      const colors = availableColors.length ? availableColors : profileColorPalette;
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function normalizePlayerProfiles(rawProfiles = {}) {
+      const profiles = {};
+      const usedColors = new Set();
+      editablePlayers.forEach(player => {
+        const savedProfile = rawProfiles?.[player.name] || {};
+        const fallbackColor = isHexColor(player.color) ? player.color : randomAvailableColor(usedColors);
+        let color = isHexColor(savedProfile.color) ? savedProfile.color : fallbackColor;
+        const colorKey = normalizeColor(color);
+        if (usedColors.has(colorKey)) {
+          color = randomAvailableColor(usedColors);
+        }
+        usedColors.add(normalizeColor(color));
+        profiles[player.name] = {
+          name: typeof savedProfile.name === 'string' ? savedProfile.name : player.name,
+          color
+        };
+      });
+      return profiles;
+    }
+
+    function loadPlayerProfiles() {
+      try {
+        const profiles = normalizePlayerProfiles(JSON.parse(localStorage.getItem(playerProfilesStorageKey)));
+        localStorage.setItem(playerProfilesStorageKey, JSON.stringify(profiles));
+        return profiles;
+      } catch {
+        const profiles = normalizePlayerProfiles();
+        localStorage.setItem(playerProfilesStorageKey, JSON.stringify(profiles));
+        return profiles;
+      }
+    }
+
+    function savePlayerProfiles() {
+      localStorage.setItem(playerProfilesStorageKey, JSON.stringify(playerProfiles));
+    }
+
+    function getPlayerProfile(playerName) {
+      return playerProfiles[playerName] || normalizePlayerProfiles()[playerName] || {
+        name: playerName,
+        color: editablePlayerMap[playerName]?.color || '#ffffff'
+      };
+    }
+
+    function displayPlayerName(playerName) {
+      const profileName = getPlayerProfile(playerName).name.trim();
+      return profileName || playerName;
+    }
+
+    function displayPlayerColor(playerName) {
+      return getPlayerProfile(playerName).color;
+    }
+
+    function profileColorOwner(color, currentPlayerName) {
+      const colorKey = normalizeColor(color);
+      return editablePlayers.find(player => (
+        player.name !== currentPlayerName
+        && normalizeColor(getPlayerProfile(player.name).color) === colorKey
+      ));
+    }
+
+    function hasDuplicateProfileColors() {
+      const colors = editablePlayers.map(player => normalizeColor(getPlayerProfile(player.name).color));
+      return new Set(colors).size !== colors.length;
+    }
+
+    function showSettingsError(message) {
+      settingsErrorEl.textContent = message;
+      settingsErrorEl.classList.add('is-visible');
+    }
+
+    function clearSettingsError() {
+      settingsErrorEl.textContent = '';
+      settingsErrorEl.classList.remove('is-visible');
+    }
+
+    function buildMatches() {
+      return settings.doubleLegs
+        ? [
+          ...firstRoundMatches,
+          ...firstRoundMatches.map(match => [match[1], match[0]])
+        ]
+        : [...firstRoundMatches];
+    }
+
+    function loadResults() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveResults() {
+      localStorage.setItem(storageKey, JSON.stringify(results));
+    }
+
+    function loadFlagOrientations() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(flagStorageKey));
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveFlagOrientations() {
+      localStorage.setItem(flagStorageKey, JSON.stringify(flagOrientations));
+    }
+
+    function loadTeamOrders() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(teamOrderStorageKey));
+        return saved && typeof saved === 'object' ? saved : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveTeamOrders() {
+      localStorage.setItem(teamOrderStorageKey, JSON.stringify(teamOrders));
+    }
+
+    function canonicalTeam(team) {
+      return [...team].sort((a, b) => playerOrder[a] - playerOrder[b]);
+    }
+
+    function teamKey(team) {
+      return canonicalTeam(team).join('|');
+    }
+
+    function getFlagOrientation(team) {
+      const key = teamKey(team);
+      if (!flagOrientations[key]) {
+        flagOrientations[key] = Math.random() < 0.5 ? 'vertical' : 'horizontal';
+        saveFlagOrientations();
+      }
+      return flagOrientations[key];
+    }
+
+    function shuffledTeam(team) {
+      const shuffled = [...team];
+      for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+      }
+      return shuffled;
+    }
+
+    function teamDisplayOrder(team) {
+      const key = teamKey(team);
+      const canonical = canonicalTeam(team);
+      const savedOrder = teamOrders[key];
+      const isValidOrder = Array.isArray(savedOrder)
+        && savedOrder.length === canonical.length
+        && canonical.every(name => savedOrder.includes(name));
+
+      if (!isValidOrder) {
+        teamOrders[key] = shuffledTeam(canonical);
+        saveTeamOrders();
+      }
+
+      return teamOrders[key];
+    }
+
+    function teamFlagMarkup(team) {
+      const orientation = getFlagOrientation(team);
+      const flagTeam = teamDisplayOrder(team);
+      return `
+        <span class="team-flag ${orientation}" aria-hidden="true">
+          ${flagTeam.map(name => `<span style="background:${displayPlayerColor(name)}"></span>`).join('')}
+        </span>
+      `;
+    }
+
+    function resultValueMarkup(value) {
+      return `<span class="score-value ${Number.isInteger(value) ? '' : 'empty'}">${Number.isInteger(value) ? value : ''}</span>`;
+    }
+
+    function teamName(team) {
+      return teamDisplayOrder(team).map(displayPlayerName).join(' ');
+    }
+
+    function formatDurationLabel(totalSeconds) {
+      if (totalSeconds % 60 === 0) return `${totalSeconds / 60} min`;
+      return `${formatTime(totalSeconds)}`;
+    }
+
+    function matchMarkup(match, index) {
+      const result = results[index] || {};
+      const complete = isComplete(result);
+      const team1Won = complete && result.team1 > result.team2;
+      const team2Won = complete && result.team2 > result.team1;
+      const roundLabel = index < firstRoundMatches.length ? 'Mecz' : 'Rewanż';
+      const matchNumber = index < firstRoundMatches.length
+        ? index + 1
+        : index + 1 - firstRoundMatches.length;
+      return `
+        <article class="match" data-open-match="${index}" role="button" tabindex="0">
+          <div class="match-result-row">
+            <div class="match-meta">
+              <span>${roundLabel} ${matchNumber}</span>
+              <span class="match-meta-duration">${formatDurationLabel(settings.matchDuration)}</span>
+              ${complete ? '<span class="match-meta-status">Zakończony</span>' : ''}
+            </div>
+            <div class="match-teams">
+              <div class="match-team-row ${team1Won ? 'is-winner' : ''}">
+                ${teamFlagMarkup(match[0])}
+                <div class="team-players">${escapeHtml(teamName(match[0]))}</div>
+                ${resultValueMarkup(result.team1)}
+              </div>
+              <div class="match-team-row ${team2Won ? 'is-winner' : ''}">
+                ${teamFlagMarkup(match[1])}
+                <div class="team-players">${escapeHtml(teamName(match[1]))}</div>
+                ${resultValueMarkup(result.team2)}
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function roundMarkup(title, startIndex, roundMatches) {
+      if (!roundMatches.length) return '';
+      return `
+        <section class="match-round">
+          <div class="match-round-title">${title}</div>
+          ${roundMatches.map((match, offset) => matchMarkup(match, startIndex + offset)).join('')}
+        </section>
+      `;
+    }
+
+    function renderMatches() {
+      const firstRound = matches.slice(0, firstRoundMatches.length);
+      const secondRound = matches.slice(firstRoundMatches.length);
+      matchesEl.innerHTML = [
+        roundMarkup('Runda Pierwsza', 0, firstRound),
+        roundMarkup('Runda Rewanżowa', firstRoundMatches.length, secondRound)
+      ].join('');
+    }
+
+    function emptyStats(player) {
+      return {
+        name: player.name,
+        color: player.color,
+        points: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        form: []
+      };
+    }
+
+    function isComplete(result) {
+      return Number.isInteger(result?.team1) && Number.isInteger(result?.team2);
+    }
+
+    function getFirstLegIndex(matchIndex) {
+      return matchIndex >= firstRoundMatches.length ? matchIndex - firstRoundMatches.length : null;
+    }
+
+    function firstLegResultText(matchIndex) {
+      const firstLegIndex = getFirstLegIndex(matchIndex);
+      if (firstLegIndex === null) return '';
+      const result = results[firstLegIndex] || {};
+      return `Pierwszy mecz: ${isComplete(result) ? `${result.team1}-${result.team2}` : '-:-'}`;
+    }
+
+    function initialRatings() {
+      return Object.fromEntries(players.map(player => [player.name, initialEloRating]));
+    }
+
+    function calculateTeamRating(teamPlayers, ratings = initialRatings()) {
+      const total = teamPlayers.reduce((sum, playerName) => sum + (ratings[playerName] ?? initialEloRating), 0);
+      return total / teamPlayers.length;
+    }
+
+    function calculateWinProbability(teamARating, teamBRating) {
+      return 1 / (1 + (10 ** ((teamBRating - teamARating) / 400)));
+    }
+
+    function calculateDrawProbability(matchHistory) {
+      const completedMatches = matchHistory.filter(match => Number.isInteger(match.goalsA) && Number.isInteger(match.goalsB));
+      const numberOfDraws = completedMatches.filter(match => match.goalsA === match.goalsB).length;
+      return (numberOfDraws + 1) / (completedMatches.length + 4);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function emptyHistoryStats() {
+      return Object.fromEntries(players.map(player => [player.name, {
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0
+      }]));
+    }
+
+    function applyHistoryTeamStats(table, names, scored, conceded) {
+      names.forEach(name => {
+        const stats = table[name];
+        stats.goalsFor += scored;
+        stats.goalsAgainst += conceded;
+
+        if (scored > conceded) {
+          stats.points += 3;
+        } else if (scored === conceded) {
+          stats.points += 1;
+        }
+      });
+    }
+
+    function buildHistoryStats(matchHistory) {
+      const table = emptyHistoryStats();
+      matchHistory.forEach(match => {
+        if (!Number.isInteger(match.goalsA) || !Number.isInteger(match.goalsB)) return;
+        applyHistoryTeamStats(table, match.teamA, match.goalsA, match.goalsB);
+        applyHistoryTeamStats(table, match.teamB, match.goalsB, match.goalsA);
+      });
+      return table;
+    }
+
+    function teamPointStrengthFromHistory(team, matchHistory) {
+      const historyStats = buildHistoryStats(matchHistory);
+      return team.reduce((total, name) => total + (historyStats[name]?.points ?? 0), 0);
+    }
+
+    function calculatePointWinProbability(teamA, teamB, matchHistory) {
+      const teamAPoints = teamPointStrengthFromHistory(teamA, matchHistory);
+      const teamBPoints = teamPointStrengthFromHistory(teamB, matchHistory);
+      const pointDiff = clamp(teamAPoints - teamBPoints, -maxPointDiffSignal, maxPointDiffSignal);
+      return 1 / (1 + Math.exp(-pointDiff / pointsProbabilityScale));
+    }
+
+    function blendWinProbabilities(eloProbability, pointProbability, matchHistory) {
+      if (!matchHistory.length) return eloProbability;
+      return (eloProbability * (1 - pointSignalWeight)) + (pointProbability * pointSignalWeight);
+    }
+
+    function normalizePercentages(probabilities) {
+      const entries = Object.entries(probabilities);
+      const rounded = Object.fromEntries(entries.map(([key, value]) => [key, Math.round(value * 100)]));
+      const total = Object.values(rounded).reduce((sum, value) => sum + value, 0);
+      const difference = 100 - total;
+
+      if (difference !== 0) {
+        const largestKey = entries.reduce((largest, [key, value]) => (
+          value > probabilities[largest] ? key : largest
+        ), entries[0][0]);
+        rounded[largestKey] += difference;
+      }
+
+      return rounded;
+    }
+
+    function sharpenProbabilities(probabilities, aggression = oddsAggression) {
+      const sharpened = Object.fromEntries(
+        Object.entries(probabilities).map(([key, value]) => [key, value ** aggression])
+      );
+      const total = Object.values(sharpened).reduce((sum, value) => sum + value, 0);
+      return Object.fromEntries(
+        Object.entries(sharpened).map(([key, value]) => [key, value / total])
+      );
+    }
+
+    function favoriteUnderdogKeys(teamAProbability, teamBProbability) {
+      return teamAProbability >= teamBProbability
+        ? { favoriteKey: 'teamA', underdogKey: 'teamB' }
+        : { favoriteKey: 'teamB', underdogKey: 'teamA' };
+    }
+
+    function enforceDrawFloorForUnderdog(percentages, teamAWinProbability, teamBWinProbability) {
+      if (Math.abs(teamAWinProbability - teamBWinProbability) < clearFavoriteThreshold) {
+        return percentages;
+      }
+
+      const { underdogKey } = favoriteUnderdogKeys(teamAWinProbability, teamBWinProbability);
+      if (percentages.draw >= percentages[underdogKey]) {
+        return percentages;
+      }
+
+      const adjusted = { ...percentages };
+      const shift = Math.ceil((adjusted[underdogKey] - adjusted.draw) / 2);
+      adjusted[underdogKey] -= shift;
+      adjusted.draw += shift;
+      return adjusted;
+    }
+
+    function calculateContextualDrawProbability(noDrawProbabilities, historicalDrawProbability) {
+      if (Math.abs(noDrawProbabilities.teamA - noDrawProbabilities.teamB) < clearFavoriteThreshold) {
+        return historicalDrawProbability;
+      }
+
+      const underdogProbability = Math.min(noDrawProbabilities.teamA, noDrawProbabilities.teamB);
+      const drawFloor = underdogProbability / (1 + underdogProbability);
+      return Math.max(historicalDrawProbability, drawFloor);
+    }
+
+    function updatePlayerRatings(matchResult, ratings = initialRatings()) {
+      const nextRatings = { ...ratings };
+      const teamARating = calculateTeamRating(matchResult.teamA, nextRatings);
+      const teamBRating = calculateTeamRating(matchResult.teamB, nextRatings);
+      const expectedA = calculateWinProbability(teamARating, teamBRating);
+      const expectedB = 1 - expectedA;
+      const isDraw = matchResult.goalsA === matchResult.goalsB;
+      const actualA = isDraw ? 0.5 : matchResult.goalsA > matchResult.goalsB ? 1 : 0;
+      const actualB = isDraw ? 0.5 : 1 - actualA;
+      const goalDiff = Math.abs(matchResult.goalsA - matchResult.goalsB);
+      const goalMultiplier = isDraw ? 1 : 1 + Math.log(goalDiff + 1) * 0.35;
+      const deltaA = eloKFactor * (actualA - expectedA) * goalMultiplier;
+      const deltaB = eloKFactor * (actualB - expectedB) * goalMultiplier;
+
+      matchResult.teamA.forEach(playerName => {
+        nextRatings[playerName] = (nextRatings[playerName] ?? initialEloRating) + deltaA;
+      });
+      matchResult.teamB.forEach(playerName => {
+        nextRatings[playerName] = (nextRatings[playerName] ?? initialEloRating) + deltaB;
+      });
+
+      return nextRatings;
+    }
+
+    function ratingsFromMatchHistory(matchHistory) {
+      return matchHistory.reduce((ratings, matchResult) => updatePlayerRatings(matchResult, ratings), initialRatings());
+    }
+
+    function calculateMatchProbabilities(teamA, teamB, matchHistory) {
+      const ratings = ratingsFromMatchHistory(matchHistory);
+      const teamARating = calculateTeamRating(teamA, ratings);
+      const teamBRating = calculateTeamRating(teamB, ratings);
+      const eloTeamAProbability = calculateWinProbability(teamARating, teamBRating);
+      const pointTeamAProbability = calculatePointWinProbability(teamA, teamB, matchHistory);
+      const blendedTeamAProbability = blendWinProbabilities(eloTeamAProbability, pointTeamAProbability, matchHistory);
+      const noDrawProbabilities = sharpenProbabilities({
+        teamA: blendedTeamAProbability,
+        teamB: 1 - blendedTeamAProbability
+      });
+      const drawProbability = calculateContextualDrawProbability(
+        noDrawProbabilities,
+        calculateDrawProbability(matchHistory)
+      );
+      const probabilities = {
+        teamA: noDrawProbabilities.teamA * (1 - drawProbability),
+        draw: drawProbability,
+        teamB: noDrawProbabilities.teamB * (1 - drawProbability)
+      };
+      const percentages = enforceDrawFloorForUnderdog(
+        normalizePercentages(probabilities),
+        noDrawProbabilities.teamA,
+        noDrawProbabilities.teamB
+      );
+
+      return {
+        percentages,
+        teamARating,
+        teamBRating,
+        teamAPoints: teamPointStrengthFromHistory(teamA, matchHistory),
+        teamBPoints: teamPointStrengthFromHistory(teamB, matchHistory)
+      };
+    }
+
+    function percentageToOdds(percentage) {
+      if (percentage <= 0) return '-';
+      return (100 / percentage).toFixed(2);
+    }
+
+    function matchResultHistoryUntil(matchIndex) {
+      return matches.slice(0, matchIndex).reduce((history, match, index) => {
+        const result = results[index];
+        if (!isComplete(result)) return history;
+        history.push({
+          teamA: match[0],
+          teamB: match[1],
+          goalsA: result.team1,
+          goalsB: result.team2
+        });
+        return history;
+      }, []);
+    }
+
+    function applyTeamStats(table, names, scored, conceded) {
+      const outcome = scored > conceded ? 'W' : scored < conceded ? 'L' : 'D';
+      names.forEach(name => {
+        const stats = table[name];
+        stats.goalsFor += scored;
+        stats.goalsAgainst += conceded;
+        stats.form.push(outcome);
+        if (outcome === 'W') {
+          stats.wins += 1;
+          stats.points += 3;
+        } else if (outcome === 'D') {
+          stats.draws += 1;
+          stats.points += 1;
+        } else {
+          stats.losses += 1;
+        }
+      });
+    }
+
+    function buildStandings() {
+      const table = Object.fromEntries(players.map(player => [player.name, emptyStats(player)]));
+      matches.forEach((match, index) => {
+        const result = results[index];
+        if (!isComplete(result)) return;
+        applyTeamStats(table, match[0], result.team1, result.team2);
+        applyTeamStats(table, match[1], result.team2, result.team1);
+      });
+
+      return Object.values(table).sort((a, b) => {
+        const gdA = a.goalsFor - a.goalsAgainst;
+        const gdB = b.goalsFor - b.goalsAgainst;
+        return b.points - a.points
+          || gdB - gdA
+          || b.goalsFor - a.goalsFor
+          || a.name.localeCompare(b.name, 'pl');
+      });
+    }
+
+    function teamStrength(team, matchIndex = matches.length) {
+      return teamPointStrengthFromHistory(team, matchResultHistoryUntil(matchIndex));
+    }
+
+    function updateDetailStrengths() {
+      if (activeMatchIndex === null) return;
+      const match = matches[activeMatchIndex];
+      detailTeam1StrengthEl.textContent = `SIŁA: ${teamStrength(match[0], activeMatchIndex)}`;
+      detailTeam2StrengthEl.textContent = `SIŁA: ${teamStrength(match[1], activeMatchIndex)}`;
+    }
+
+    function updatePredictionPanel() {
+      if (activeMatchIndex === null) return;
+      const match = matches[activeMatchIndex];
+      const history = matchResultHistoryUntil(activeMatchIndex);
+      const prediction = calculateMatchProbabilities(match[0], match[1], history);
+
+      predictionTeamAEl.textContent = `${prediction.percentages.teamA}%`;
+      predictionDrawEl.textContent = `${prediction.percentages.draw}%`;
+      predictionTeamBEl.textContent = `${prediction.percentages.teamB}%`;
+      predictionOddAEl.textContent = percentageToOdds(prediction.percentages.teamA);
+      predictionOddDrawEl.textContent = percentageToOdds(prediction.percentages.draw);
+      predictionOddBEl.textContent = percentageToOdds(prediction.percentages.teamB);
+      [predictionItemAEl, predictionItemDrawEl, predictionItemBEl].forEach(item => item.classList.remove('is-hit'));
+
+      const result = results[activeMatchIndex];
+      if (!isComplete(result)) return;
+
+      if (result.team1 > result.team2) {
+        predictionItemAEl.classList.add('is-hit');
+      } else if (result.team2 > result.team1) {
+        predictionItemBEl.classList.add('is-hit');
+      } else {
+        predictionItemDrawEl.classList.add('is-hit');
+      }
+    }
+
+    function formMarkup(form) {
+      if (!form.length) return '<span class="empty-form">-</span>';
+      return `
+        <span class="form">
+          ${form.slice(-5).map(item => {
+            const className = item === 'W' ? 'win' : item === 'L' ? 'loss' : 'draw';
+            return `<span class="form-chip ${className}">${item}</span>`;
+          }).join('')}
+        </span>
+      `;
+    }
+
+    function renderStandings() {
+      const standings = buildStandings();
+      standingsEl.innerHTML = standings.map((player, index) => {
+        const balance = player.goalsFor - player.goalsAgainst;
+        const balanceLabel = balance > 0 ? `+${balance}` : String(balance);
+        return `
+          <tr>
+            <td class="rank">${index + 1}</td>
+            <td class="name-cell">
+              <span class="name">
+                <span class="swatch" style="background:${displayPlayerColor(player.name)}"></span>
+                <span>${escapeHtml(displayPlayerName(player.name))}</span>
+              </span>
+            </td>
+            <td class="points">${player.points}</td>
+            <td class="stat">${player.wins}</td>
+            <td class="stat">${player.draws}</td>
+            <td class="stat">${player.losses}</td>
+            <td class="stat">${player.goalsFor}</td>
+            <td class="stat">${player.goalsAgainst}</td>
+            <td class="stat">${balanceLabel}</td>
+            <td class="form-cell">${formMarkup(player.form)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderProgress() {
+      const complete = matches.reduce((count, match, index) => count + (isComplete(results[index]) ? 1 : 0), 0);
+      progressEl.textContent = `${complete}/${matches.length} wyników`;
+    }
+
+    function renderScheduleSummary() {
+      scheduleSummaryEl.textContent = `${matches.length} meczów po ${formatDurationLabel(settings.matchDuration)}`;
+    }
+
+    function renderSettingsForm() {
+      matchMinutesInput.value = String(settings.matchDuration / 60);
+      countdownSecondsInput.value = String(settings.countdownDuration);
+      playerCountSelect.value = String(settings.playerCount);
+      doubleLegsInput.checked = settings.doubleLegs;
+    }
+
+    function playerProfileMarkup(player, index) {
+      const profile = getPlayerProfile(player.name);
+      return `
+        <article class="player-profile" data-player-profile="${escapeHtml(player.name)}">
+          <div class="player-profile-top">
+            <button class="profile-preview" type="button" data-color-toggle style="background:${profile.color}" aria-label="Wybierz kolor piłkarza ${index + 1}" aria-expanded="false"></button>
+            <input class="profile-name-input" type="text" value="${escapeHtml(profile.name)}" aria-label="Nazwa piłkarza ${index + 1}" maxlength="20">
+          </div>
+          <div class="profile-colors" aria-label="Kolor piłkarza ${index + 1}">
+            ${profileColorPalette.map(color => {
+              const isActive = normalizeColor(profile.color) === normalizeColor(color);
+              const isTaken = Boolean(profileColorOwner(color, player.name));
+              return `
+                <button
+                  class="profile-color ${isActive ? 'is-active' : ''}"
+                  type="button"
+                  data-profile-color="${color}"
+                  style="background:${color}"
+                  aria-label="Kolor ${color}${isTaken ? ' zajęty' : ''}"
+                  aria-pressed="${isActive ? 'true' : 'false'}"
+                  ${isTaken ? 'disabled' : ''}>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderPlayerEditor() {
+      playerEditorEl.innerHTML = editablePlayers.map(playerProfileMarkup).join('');
+    }
+
+    function refreshPlayerProfileViews({ renderEditor = true } = {}) {
+      renderMatches();
+      renderStandings();
+      if (renderEditor) renderPlayerEditor();
+
+      if (activeMatchIndex !== null) {
+        const match = matches[activeMatchIndex];
+        detailTeam1FlagEl.innerHTML = teamFlagMarkup(match[0]);
+        detailTeam2FlagEl.innerHTML = teamFlagMarkup(match[1]);
+        detailTeam1NameEl.textContent = teamName(match[0]);
+        detailTeam2NameEl.textContent = teamName(match[1]);
+      }
+    }
+
+    function setSettingsView(viewName) {
+      const isEditor = viewName === 'players';
+      settingsMainViewEl.classList.toggle('is-active', !isEditor);
+      playersEditorViewEl.classList.toggle('is-active', isEditor);
+      settingsBackButton.classList.toggle('is-hidden', !isEditor);
+      settingsTitleEl.textContent = isEditor ? 'Edytuj Piłkarzy' : 'Ustawienia';
+      if (isEditor) renderPlayerEditor();
+    }
+
+    function canLeavePlayerEditor() {
+      if (!hasDuplicateProfileColors()) {
+        clearSettingsError();
+        return true;
+      }
+
+      setSettingsView('players');
+      showSettingsError('Dwóch piłkarzy nie może mieć tego samego koloru.');
+      return false;
+    }
+
+    function renderAll() {
+      renderStandings();
+      renderProgress();
+      renderScheduleSummary();
+      renderSettingsForm();
+    }
+
+    function setActiveScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(item => item.classList.remove('is-active'));
+      document.querySelector(`#${screenName}-screen`).classList.add('is-active');
+    }
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function setDetailInputsEnabled(isEnabled) {
+      detailTeam1ScoreEl.disabled = !isEnabled;
+      detailTeam2ScoreEl.disabled = !isEnabled;
+    }
+
+    function isActiveTimerPhase() {
+      return timerPhase === 'countdown' || timerPhase === 'match';
+    }
+
+    function isTimerRunning() {
+      return Boolean(timerInterval) && isActiveTimerPhase();
+    }
+
+    function savePausedMatchState() {
+      if (activeMatchIndex === null || !isActiveTimerPhase()) return;
+      pausedMatchStates[activeMatchIndex] = {
+        phase: timerPhase,
+        countdownRemaining,
+        matchRemaining
+      };
+    }
+
+    function clearPausedMatchState(matchIndex = activeMatchIndex) {
+      if (matchIndex === null) return;
+      delete pausedMatchStates[matchIndex];
+    }
+
+    function updateBackButtonLabel() {
+      backToMenuButton.textContent = isTimerRunning() ? 'Pauza i menu' : 'Wróć do menu';
+    }
+
+    function updateTimerControls() {
+      const isActive = isActiveTimerPhase();
+      timerControlsEl.classList.toggle('is-visible', isActive);
+      pauseMatchButton.disabled = !isTimerRunning();
+    }
+
+    function updateDetailResult(side, rawValue) {
+      if (activeMatchIndex === null) return;
+      const value = rawValue === '' ? null : Math.max(0, Math.min(99, Number(rawValue)));
+      results[activeMatchIndex] = results[activeMatchIndex] || {};
+
+      if (value === null || Number.isNaN(value)) {
+        delete results[activeMatchIndex][side];
+      } else {
+        results[activeMatchIndex][side] = value;
+      }
+
+      saveResults();
+      renderMatches();
+      renderAll();
+      firstLegResultEl.textContent = firstLegResultText(activeMatchIndex);
+      updateDetailStrengths();
+      updatePredictionPanel();
+    }
+
+    function markMatchFinished() {
+      timerPhase = 'finished';
+      stopTimer();
+      clearPausedMatchState();
+      timerLabelEl.textContent = 'Koniec meczu';
+      timerDisplayEl.textContent = '0:00';
+      startMatchButton.textContent = 'Mecz zakończony';
+      startMatchButton.disabled = true;
+      backToMenuButton.classList.add('is-visible');
+      updateBackButtonLabel();
+      setDetailInputsEnabled(true);
+      updateTimerControls();
+      detailTeam1ScoreEl.focus();
+    }
+
+    function tickTimer() {
+      if (timerPhase === 'countdown') {
+        countdownRemaining -= 1;
+        if (countdownRemaining > 0) {
+          timerLabelEl.textContent = 'Start za';
+          timerDisplayEl.textContent = String(countdownRemaining);
+          return;
+        }
+
+        timerPhase = 'match';
+        matchRemaining = settings.matchDuration;
+        timerLabelEl.textContent = 'Mecz trwa';
+        timerDisplayEl.textContent = formatTime(matchRemaining);
+        return;
+      }
+
+      if (timerPhase === 'match') {
+        matchRemaining -= 1;
+        if (matchRemaining > 0) {
+          timerDisplayEl.textContent = formatTime(matchRemaining);
+          return;
+        }
+
+        markMatchFinished();
+      }
+    }
+
+    function startMatchTimer() {
+      if (timerInterval || timerPhase === 'finished') return;
+      if (timerPhase === 'idle') {
+        timerPhase = settings.countdownDuration > 0 ? 'countdown' : 'match';
+        countdownRemaining = settings.countdownDuration;
+        matchRemaining = settings.matchDuration;
+      }
+
+      clearPausedMatchState();
+      setDetailInputsEnabled(false);
+      backToMenuButton.classList.add('is-visible');
+      startMatchButton.disabled = true;
+      startMatchButton.textContent = timerPhase === 'countdown' ? 'Odliczanie' : 'Mecz trwa';
+      timerLabelEl.textContent = timerPhase === 'countdown' ? 'Start za' : 'Mecz trwa';
+      timerDisplayEl.textContent = timerPhase === 'countdown' ? String(countdownRemaining) : formatTime(matchRemaining);
+      updateBackButtonLabel();
+      stopTimer();
+      timerInterval = setInterval(tickTimer, 1000);
+      updateTimerControls();
+    }
+
+    function pauseMatchTimer() {
+      if (!isTimerRunning()) return;
+      stopTimer();
+      startMatchButton.disabled = false;
+      startMatchButton.textContent = 'Wznów mecz';
+      timerLabelEl.textContent = 'Pauza';
+      setDetailInputsEnabled(true);
+      updateBackButtonLabel();
+      updateTimerControls();
+    }
+
+    function resetMatchTimer() {
+      stopTimer();
+      timerPhase = 'idle';
+      countdownRemaining = settings.countdownDuration;
+      matchRemaining = settings.matchDuration;
+      clearPausedMatchState();
+      timerLabelEl.textContent = 'Gotowy';
+      timerDisplayEl.textContent = formatTime(settings.matchDuration);
+      startMatchButton.textContent = 'Start Mecz';
+      startMatchButton.disabled = false;
+      setDetailInputsEnabled(true);
+      updateBackButtonLabel();
+      updateTimerControls();
+    }
+
+    function openMatch(matchIndex) {
+      activeMatchIndex = matchIndex;
+      const match = matches[matchIndex];
+      const result = results[matchIndex] || {};
+      const isAlreadyComplete = isComplete(result);
+      const pausedState = pausedMatchStates[matchIndex];
+
+      stopTimer();
+      timerPhase = isAlreadyComplete ? 'finished' : pausedState?.phase || 'idle';
+      countdownRemaining = pausedState?.countdownRemaining ?? settings.countdownDuration;
+      matchRemaining = pausedState?.matchRemaining ?? settings.matchDuration;
+
+      detailTeam1FlagEl.innerHTML = teamFlagMarkup(match[0]);
+      detailTeam2FlagEl.innerHTML = teamFlagMarkup(match[1]);
+      detailTeam1NameEl.textContent = teamName(match[0]);
+      detailTeam2NameEl.textContent = teamName(match[1]);
+      detailTeam1ScoreEl.value = result.team1 ?? '';
+      detailTeam2ScoreEl.value = result.team2 ?? '';
+      firstLegResultEl.textContent = firstLegResultText(matchIndex);
+      firstLegResultEl.classList.toggle('is-visible', getFirstLegIndex(matchIndex) !== null);
+      updateDetailStrengths();
+      updatePredictionPanel();
+
+      timerLabelEl.textContent = isAlreadyComplete
+        ? 'Koniec meczu'
+        : pausedState
+          ? 'Pauza'
+          : 'Gotowy';
+      timerDisplayEl.textContent = isAlreadyComplete
+        ? '0:00'
+        : pausedState?.phase === 'countdown'
+          ? String(countdownRemaining)
+          : pausedState?.phase === 'match'
+            ? formatTime(matchRemaining)
+            : formatTime(settings.matchDuration);
+      startMatchButton.textContent = isAlreadyComplete ? 'Mecz zakończony' : pausedState ? 'Wznów mecz' : 'Start Mecz';
+      startMatchButton.disabled = isAlreadyComplete;
+      backToMenuButton.classList.add('is-visible');
+      updateBackButtonLabel();
+      setDetailInputsEnabled(true);
+      updateTimerControls();
+
+      topbarEl.classList.add('is-hidden');
+      setActiveScreen('detail');
+    }
+
+    function returnToMenu() {
+      savePausedMatchState();
+      stopTimer();
+      activeMatchIndex = null;
+      topbarEl.classList.remove('is-hidden');
+      setActiveScreen('matches');
+      document.querySelectorAll('.tab').forEach(item => item.classList.remove('is-active'));
+      document.querySelector('[data-tab="matches"]').classList.add('is-active');
+      renderMatches();
+      renderAll();
+    }
+
+    function openSettings() {
+      renderSettingsForm();
+      setSettingsView('main');
+      clearSettingsError();
+      settingsPanelEl.classList.add('is-visible');
+      settingsPanelEl.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSettings() {
+      if (!canLeavePlayerEditor()) return false;
+      settingsPanelEl.classList.remove('is-visible');
+      settingsPanelEl.setAttribute('aria-hidden', 'true');
+      return true;
+    }
+
+    function applySettingsFromForm() {
+      settings = normalizeSettings({
+        matchDuration: Number(matchMinutesInput.value) * 60,
+        countdownDuration: Number(countdownSecondsInput.value),
+        playerCount: Number(playerCountSelect.value),
+        doubleLegs: doubleLegsInput.checked
+      });
+      matches = buildMatches();
+      pausedMatchStates = {};
+      countdownRemaining = settings.countdownDuration;
+      matchRemaining = settings.matchDuration;
+      saveSettings();
+      renderMatches();
+      renderAll();
+    }
+
+    function updatePlayerProfile(playerName, changes, options) {
+      playerProfiles[playerName] = {
+        ...getPlayerProfile(playerName),
+        ...changes
+      };
+      savePlayerProfiles();
+      if (!hasDuplicateProfileColors()) clearSettingsError();
+      refreshPlayerProfileViews(options);
+    }
+
+    matchesEl.addEventListener('click', event => {
+      const matchEl = event.target.closest('[data-open-match]');
+      if (!matchEl) return;
+      openMatch(Number(matchEl.dataset.openMatch));
+    });
+
+    matchesEl.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const matchEl = event.target.closest('[data-open-match]');
+      if (!matchEl) return;
+      event.preventDefault();
+      openMatch(Number(matchEl.dataset.openMatch));
+    });
+
+    detailTeam1ScoreEl.addEventListener('input', () => {
+      updateDetailResult('team1', detailTeam1ScoreEl.value);
+    });
+
+    detailTeam2ScoreEl.addEventListener('input', () => {
+      updateDetailResult('team2', detailTeam2ScoreEl.value);
+    });
+
+    startMatchButton.addEventListener('click', startMatchTimer);
+    pauseMatchButton.addEventListener('click', pauseMatchTimer);
+    resetMatchButton.addEventListener('click', resetMatchTimer);
+    backToMenuButton.addEventListener('click', returnToMenu);
+
+    settingsOpenButton.addEventListener('click', openSettings);
+    settingsCloseButton.addEventListener('click', closeSettings);
+    settingsBackButton.addEventListener('click', () => {
+      if (canLeavePlayerEditor()) setSettingsView('main');
+    });
+    editPlayersButton.addEventListener('click', () => setSettingsView('players'));
+    settingsFormEl.addEventListener('submit', event => event.preventDefault());
+    settingsPanelEl.addEventListener('click', event => {
+      if (event.target === settingsPanelEl) closeSettings();
+    });
+    matchMinutesInput.addEventListener('change', applySettingsFromForm);
+    countdownSecondsInput.addEventListener('change', applySettingsFromForm);
+    playerCountSelect.addEventListener('change', applySettingsFromForm);
+    doubleLegsInput.addEventListener('change', applySettingsFromForm);
+    playerEditorEl.addEventListener('input', event => {
+      const input = event.target.closest('.profile-name-input');
+      if (!input) return;
+      const profileEl = input.closest('[data-player-profile]');
+      updatePlayerProfile(profileEl.dataset.playerProfile, { name: input.value }, { renderEditor: false });
+    });
+    playerEditorEl.addEventListener('click', event => {
+      const colorToggle = event.target.closest('[data-color-toggle]');
+      if (colorToggle) {
+        const profileEl = colorToggle.closest('[data-player-profile]');
+        const colorsEl = profileEl.querySelector('.profile-colors');
+        const shouldOpen = !colorsEl.classList.contains('is-open');
+        playerEditorEl.querySelectorAll('.profile-colors').forEach(item => item.classList.remove('is-open'));
+        playerEditorEl.querySelectorAll('[data-color-toggle]').forEach(item => item.setAttribute('aria-expanded', 'false'));
+        colorsEl.classList.toggle('is-open', shouldOpen);
+        colorToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        return;
+      }
+
+      const colorButton = event.target.closest('[data-profile-color]');
+      if (!colorButton) return;
+      if (colorButton.disabled) {
+        showSettingsError('Ten kolor jest już zajęty.');
+        return;
+      }
+      const profileEl = colorButton.closest('[data-player-profile]');
+      updatePlayerProfile(profileEl.dataset.playerProfile, { color: colorButton.dataset.profileColor });
+    });
+
+    clearButton.addEventListener('click', () => {
+      results = [];
+      pausedMatchStates = {};
+      saveResults();
+      renderMatches();
+      renderAll();
+    });
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(item => item.classList.remove('is-active'));
+        topbarEl.classList.remove('is-hidden');
+        stopTimer();
+        activeMatchIndex = null;
+        tab.classList.add('is-active');
+        setActiveScreen(tab.dataset.tab);
+      });
+    });
+
+    renderMatches();
+    renderAll();
+  </script>
+</body>
+</html>
