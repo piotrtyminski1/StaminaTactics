@@ -936,6 +936,8 @@
     .detail-score-input {
       width: 42px;
       height: 48px;
+      box-sizing: border-box;
+      padding: 0;
       border: 1px solid var(--line);
       border-radius: 7px;
       background: var(--panel-3);
@@ -1153,7 +1155,42 @@
       display: block;
     }
 
+    @media (max-width: 600px) {
+      .scoreboard {
+        grid-template-columns: minmax(0, 1fr) 126px minmax(0, 1fr);
+        row-gap: 8px;
+        padding-inline: 10px;
+      }
+
+      .scoreboard-name {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .detail-score {
+        grid-template-columns: 48px 14px 48px;
+      }
+
+      .detail-score-input {
+        width: 48px;
+        height: 50px;
+        font-size: 27px;
+        line-height: 31px;
+      }
+
+      .timer-display {
+        transform: translateY(14px);
+      }
+    }
+
     @media (max-width: 360px) {
+      .scoreboard {
+        grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
+        padding-inline: 8px;
+      }
+
       .flag-card {
         width: 70px;
         height: 70px;
@@ -1167,6 +1204,17 @@
       .scoreboard-name {
         font-size: 12px;
         line-height: 15px;
+      }
+
+      .detail-score {
+        grid-template-columns: 46px 12px 46px;
+      }
+
+      .detail-score-input {
+        width: 46px;
+        height: 48px;
+        font-size: 25px;
+        line-height: 29px;
       }
 
       .scoreboard-strength {
@@ -1453,6 +1501,12 @@
     const teamOrderStorageKey = 'stamina-tactics-3v3-team-orders';
     const settingsStorageKey = 'stamina-tactics-3v3-settings';
     const playerProfilesStorageKey = 'stamina-tactics-3v3-player-profiles';
+    const matchSoundPaths = {
+      ping: 'assets/audio/notification-ping-372479.mp3',
+      pingDouble: 'assets/audio/ping%20x2.mp3',
+      whistle: 'assets/audio/referee-whistle-291816.mp3'
+    };
+    const soundClipSeconds = 2;
     const initialEloRating = 1000;
     const eloKFactor = 16;
     const oddsAggression = 1.25;
@@ -1473,6 +1527,9 @@
     let countdownRemaining = settings.countdownDuration;
     let matchRemaining = settings.matchDuration;
     let pausedMatchStates = {};
+    let soundContext = null;
+    let soundBuffers = {};
+    let soundBufferPromises = {};
 
     const topbarEl = document.querySelector('.topbar');
     const matchesEl = document.querySelector('#matches');
@@ -2272,6 +2329,106 @@
       return `${minutes}:${seconds}`;
     }
 
+    function getSoundContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!soundContext) soundContext = new AudioContextClass();
+      return soundContext;
+    }
+
+    function loadSoundBuffer(src) {
+      const context = getSoundContext();
+      if (!context) return Promise.resolve(null);
+      if (soundBuffers[src]) return Promise.resolve(soundBuffers[src]);
+      if (soundBufferPromises[src]) return soundBufferPromises[src];
+
+      soundBufferPromises[src] = fetch(src)
+        .then(response => response.arrayBuffer())
+        .then(buffer => context.decodeAudioData(buffer))
+        .then(buffer => {
+          soundBuffers[src] = buffer;
+          return buffer;
+        })
+        .catch(() => null);
+
+      return soundBufferPromises[src];
+    }
+
+    function primeMatchSounds() {
+      const context = getSoundContext();
+      if (!context) return;
+      if (context.state === 'suspended') context.resume().catch(() => {});
+      Object.values(matchSoundPaths).forEach(src => loadSoundBuffer(src));
+    }
+
+    function playAudioElement(src, clipSeconds) {
+      const audio = new Audio(src);
+      let stopTimeout = null;
+
+      const stopAudio = () => {
+        audio.pause();
+        try {
+          audio.currentTime = 0;
+        } catch {}
+        if (stopTimeout) clearTimeout(stopTimeout);
+      };
+
+      audio.preload = 'auto';
+      audio.addEventListener('timeupdate', () => {
+        if (audio.currentTime >= clipSeconds) stopAudio();
+      });
+      audio.addEventListener('ended', () => {
+        if (stopTimeout) clearTimeout(stopTimeout);
+      });
+
+      stopTimeout = setTimeout(stopAudio, clipSeconds * 1000);
+      const playback = audio.play();
+      if (playback?.catch) playback.catch(() => {});
+    }
+
+    async function playLimitedSound(src, clipSeconds = soundClipSeconds) {
+      const context = getSoundContext();
+      if (!context) {
+        playAudioElement(src, clipSeconds);
+        return;
+      }
+
+      if (context.state === 'suspended') {
+        try {
+          await context.resume();
+        } catch {
+          playAudioElement(src, clipSeconds);
+          return;
+        }
+      }
+
+      const buffer = await loadSoundBuffer(src);
+      if (!buffer) {
+        playAudioElement(src, clipSeconds);
+        return;
+      }
+
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start(0, 0, Math.min(clipSeconds, buffer.duration));
+    }
+
+    function playSoundSequence(src, repeatCount) {
+      for (let index = 0; index < repeatCount; index += 1) {
+        setTimeout(() => playLimitedSound(src), index * (soundClipSeconds * 1000 + 100));
+      }
+    }
+
+    function playMatchWhistle() {
+      playLimitedSound(matchSoundPaths.whistle);
+    }
+
+    function playMinuteSignal(elapsedSeconds) {
+      if (elapsedSeconds === 60) playSoundSequence(matchSoundPaths.ping, 1);
+      if (elapsedSeconds === 120) playLimitedSound(matchSoundPaths.pingDouble);
+    }
+
     function stopTimer() {
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -2347,6 +2504,7 @@
       updateBackButtonLabel();
       setDetailInputsEnabled(true);
       updateTimerControls();
+      playMatchWhistle();
       detailTeam1ScoreEl.focus();
     }
 
@@ -2363,6 +2521,7 @@
         matchRemaining = settings.matchDuration;
         timerLabelEl.textContent = 'Mecz trwa';
         timerDisplayEl.textContent = formatTime(matchRemaining);
+        playMatchWhistle();
         return;
       }
 
@@ -2370,6 +2529,7 @@
         matchRemaining -= 1;
         if (matchRemaining > 0) {
           timerDisplayEl.textContent = formatTime(matchRemaining);
+          playMinuteSignal(settings.matchDuration - matchRemaining);
           return;
         }
 
@@ -2379,6 +2539,8 @@
 
     function startMatchTimer() {
       if (timerInterval || timerPhase === 'finished') return;
+      primeMatchSounds();
+      const isStartingNewMatch = timerPhase === 'idle';
       if (timerPhase === 'idle') {
         timerPhase = settings.countdownDuration > 0 ? 'countdown' : 'match';
         countdownRemaining = settings.countdownDuration;
@@ -2396,6 +2558,7 @@
       stopTimer();
       timerInterval = setInterval(tickTimer, 1000);
       updateTimerControls();
+      if (isStartingNewMatch && timerPhase === 'match') playMatchWhistle();
     }
 
     function pauseMatchTimer() {
