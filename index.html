@@ -1155,6 +1155,78 @@
       display: block;
     }
 
+    .battery-mode-action {
+      display: none;
+    }
+
+    .battery-mode-action.is-visible {
+      display: block;
+    }
+
+    .battery-timer {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      place-items: center;
+      overflow: hidden;
+      background: #000;
+      color: #5d0016;
+    }
+
+    .battery-timer.is-visible {
+      display: grid;
+    }
+
+    .battery-timer-close {
+      position: absolute;
+      top: max(8px, env(safe-area-inset-top));
+      right: max(8px, env(safe-area-inset-right));
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #8b001d;
+      cursor: pointer;
+      font-size: 28px;
+      line-height: 44px;
+      font-weight: 800;
+    }
+
+    .battery-timer-content {
+      width: 100dvh;
+      height: 100dvw;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 10px;
+      padding: 24px;
+      text-align: center;
+      transform: rotate(90deg);
+    }
+
+    .battery-timer-label {
+      color: #36000d;
+      font-size: clamp(14px, 2.4vw, 24px);
+      line-height: 1.2;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .battery-timer-display {
+      color: #5d0016;
+      font-family: Audiowide, FS Numbers, LivesportFinderLatin, Arial, sans-serif;
+      font-size: clamp(72px, 22dvh, 210px);
+      line-height: .9;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+    }
+
+    body.battery-mode-active {
+      overflow: hidden;
+    }
+
     @media (max-width: 600px) {
       .scoreboard {
         grid-template-columns: minmax(0, 1fr) 126px minmax(0, 1fr);
@@ -1448,7 +1520,15 @@
             <button class="timer-control" type="button" id="pause-match">Pauza</button>
             <button class="timer-control" type="button" id="reset-match">Resetuj</button>
           </div>
+          <button class="timer-control battery-mode-action" type="button" id="enter-battery-mode">Tryb oszczędzania</button>
           <button class="secondary-action" type="button" id="back-to-menu">Wróć do menu</button>
+        </div>
+        <div class="battery-timer" id="battery-timer" aria-hidden="true">
+          <button class="battery-timer-close" type="button" id="close-battery-mode" aria-label="Wróć do normalnego trybu meczu">&times;</button>
+          <div class="battery-timer-content">
+            <div class="battery-timer-label" id="battery-timer-label">Gotowy</div>
+            <div class="battery-timer-display" id="battery-timer-display">3:00</div>
+          </div>
         </div>
       </section>
     </section>
@@ -1526,10 +1606,14 @@
     let timerPhase = 'idle';
     let countdownRemaining = settings.countdownDuration;
     let matchRemaining = settings.matchDuration;
+    let countdownEndTime = null;
+    let matchEndTime = null;
+    let lastMinuteSignalSecond = 0;
     let pausedMatchStates = {};
     let soundContext = null;
     let soundBuffers = {};
     let soundBufferPromises = {};
+    let wakeLock = null;
 
     const topbarEl = document.querySelector('.topbar');
     const matchesEl = document.querySelector('#matches');
@@ -1578,6 +1662,11 @@
     const resetMatchButton = document.querySelector('#reset-match');
     const startMatchButton = document.querySelector('#start-match');
     const backToMenuButton = document.querySelector('#back-to-menu');
+    const enterBatteryModeButton = document.querySelector('#enter-battery-mode');
+    const closeBatteryModeButton = document.querySelector('#close-battery-mode');
+    const batteryTimerEl = document.querySelector('#battery-timer');
+    const batteryTimerLabelEl = document.querySelector('#battery-timer-label');
+    const batteryTimerDisplayEl = document.querySelector('#battery-timer-display');
 
     function clampNumber(value, min, max, fallback) {
       const number = Number(value);
@@ -2329,6 +2418,74 @@
       return `${minutes}:${seconds}`;
     }
 
+    function formatCountdownTime(milliseconds) {
+      const centiseconds = Math.max(0, Math.ceil(milliseconds / 10));
+      const seconds = String(Math.floor(centiseconds / 100)).padStart(2, '0');
+      const fraction = String(centiseconds % 100).padStart(2, '0');
+      return `${seconds}.${fraction}`;
+    }
+
+    function setTimerText(label, display) {
+      timerLabelEl.textContent = label;
+      timerDisplayEl.textContent = display;
+      batteryTimerLabelEl.textContent = label;
+      batteryTimerDisplayEl.textContent = display;
+    }
+
+    function updateRemainingFromClock() {
+      const now = Date.now();
+      if (timerPhase === 'countdown' && countdownEndTime) {
+        countdownRemaining = Math.max(0, Math.ceil((countdownEndTime - now) / 1000));
+      }
+      if (timerPhase === 'match' && matchEndTime) {
+        matchRemaining = Math.max(0, Math.ceil((matchEndTime - now) / 1000));
+      }
+    }
+
+    function isBatteryModeVisible() {
+      return batteryTimerEl.classList.contains('is-visible');
+    }
+
+    function requestMatchWakeLock() {
+      if (!('wakeLock' in navigator) || wakeLock || !isActiveTimerPhase()) return;
+      navigator.wakeLock.request('screen')
+        .then(lock => {
+          wakeLock = lock;
+          wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+          });
+        })
+        .catch(() => {});
+    }
+
+    function releaseMatchWakeLock() {
+      if (!wakeLock) return;
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+
+    function enterBatteryMode() {
+      if (!isActiveTimerPhase()) return;
+      batteryTimerEl.classList.add('is-visible');
+      batteryTimerEl.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('battery-mode-active');
+      requestMatchWakeLock();
+
+      const fullscreenTarget = batteryTimerEl;
+      if (!document.fullscreenElement && fullscreenTarget.requestFullscreen) {
+        fullscreenTarget.requestFullscreen().catch(() => {});
+      }
+    }
+
+    function leaveBatteryMode() {
+      batteryTimerEl.classList.remove('is-visible');
+      batteryTimerEl.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('battery-mode-active');
+      if (document.fullscreenElement === batteryTimerEl && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
     function getSoundContext() {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
@@ -2425,8 +2582,14 @@
     }
 
     function playMinuteSignal(elapsedSeconds) {
-      if (elapsedSeconds === 60) playSoundSequence(matchSoundPaths.ping, 1);
-      if (elapsedSeconds === 120) playLimitedSound(matchSoundPaths.pingDouble);
+      if (lastMinuteSignalSecond < 60 && elapsedSeconds >= 60) {
+        lastMinuteSignalSecond = 60;
+        playSoundSequence(matchSoundPaths.ping, 1);
+      }
+      if (lastMinuteSignalSecond < 120 && elapsedSeconds >= 120) {
+        lastMinuteSignalSecond = 120;
+        playLimitedSound(matchSoundPaths.pingDouble);
+      }
     }
 
     function stopTimer() {
@@ -2451,6 +2614,7 @@
 
     function savePausedMatchState() {
       if (activeMatchIndex === null || !isActiveTimerPhase()) return;
+      updateRemainingFromClock();
       pausedMatchStates[activeMatchIndex] = {
         phase: timerPhase,
         countdownRemaining,
@@ -2470,6 +2634,7 @@
     function updateTimerControls() {
       const isActive = isActiveTimerPhase();
       timerControlsEl.classList.toggle('is-visible', isActive);
+      enterBatteryModeButton.classList.toggle('is-visible', isActive);
       pauseMatchButton.disabled = !isTimerRunning();
     }
 
@@ -2495,41 +2660,47 @@
     function markMatchFinished() {
       timerPhase = 'finished';
       stopTimer();
+      countdownEndTime = null;
+      matchEndTime = null;
       clearPausedMatchState();
-      timerLabelEl.textContent = 'Koniec meczu';
-      timerDisplayEl.textContent = '0:00';
+      setTimerText('Koniec meczu', '0:00');
       startMatchButton.textContent = 'Mecz zakończony';
       startMatchButton.disabled = true;
       backToMenuButton.classList.add('is-visible');
       updateBackButtonLabel();
       setDetailInputsEnabled(true);
       updateTimerControls();
+      releaseMatchWakeLock();
       playMatchWhistle();
       detailTeam1ScoreEl.focus();
     }
 
     function tickTimer() {
+      const now = Date.now();
+
       if (timerPhase === 'countdown') {
-        countdownRemaining -= 1;
-        if (countdownRemaining > 0) {
-          timerLabelEl.textContent = 'Start za';
-          timerDisplayEl.textContent = String(countdownRemaining);
+        const remainingMilliseconds = Math.max(0, countdownEndTime - now);
+        countdownRemaining = Math.max(0, Math.ceil(remainingMilliseconds / 1000));
+        if (remainingMilliseconds > 0) {
+          setTimerText('Start za', formatCountdownTime(remainingMilliseconds));
           return;
         }
 
         timerPhase = 'match';
         matchRemaining = settings.matchDuration;
-        timerLabelEl.textContent = 'Mecz trwa';
-        timerDisplayEl.textContent = formatTime(matchRemaining);
+        matchEndTime = Date.now() + settings.matchDuration * 1000;
+        lastMinuteSignalSecond = 0;
+        setTimerText('Mecz trwa', formatTime(matchRemaining));
         playMatchWhistle();
         return;
       }
 
       if (timerPhase === 'match') {
-        matchRemaining -= 1;
-        if (matchRemaining > 0) {
-          timerDisplayEl.textContent = formatTime(matchRemaining);
-          playMinuteSignal(settings.matchDuration - matchRemaining);
+        const remainingMilliseconds = Math.max(0, matchEndTime - now);
+        matchRemaining = Math.max(0, Math.ceil(remainingMilliseconds / 1000));
+        if (remainingMilliseconds > 0) {
+          setTimerText('Mecz trwa', formatTime(matchRemaining));
+          playMinuteSignal(Math.floor((settings.matchDuration * 1000 - remainingMilliseconds) / 1000));
           return;
         }
 
@@ -2540,11 +2711,19 @@
     function startMatchTimer() {
       if (timerInterval || timerPhase === 'finished') return;
       primeMatchSounds();
+      requestMatchWakeLock();
       const isStartingNewMatch = timerPhase === 'idle';
       if (timerPhase === 'idle') {
         timerPhase = settings.countdownDuration > 0 ? 'countdown' : 'match';
         countdownRemaining = settings.countdownDuration;
         matchRemaining = settings.matchDuration;
+        countdownEndTime = timerPhase === 'countdown' ? Date.now() + settings.countdownDuration * 1000 : null;
+        matchEndTime = timerPhase === 'match' ? Date.now() + settings.matchDuration * 1000 : null;
+        lastMinuteSignalSecond = 0;
+      } else if (timerPhase === 'countdown') {
+        countdownEndTime = Date.now() + countdownRemaining * 1000;
+      } else if (timerPhase === 'match') {
+        matchEndTime = Date.now() + matchRemaining * 1000;
       }
 
       clearPausedMatchState();
@@ -2552,21 +2731,27 @@
       backToMenuButton.classList.add('is-visible');
       startMatchButton.disabled = true;
       startMatchButton.textContent = timerPhase === 'countdown' ? 'Odliczanie' : 'Mecz trwa';
-      timerLabelEl.textContent = timerPhase === 'countdown' ? 'Start za' : 'Mecz trwa';
-      timerDisplayEl.textContent = timerPhase === 'countdown' ? String(countdownRemaining) : formatTime(matchRemaining);
+      setTimerText(
+        timerPhase === 'countdown' ? 'Start za' : 'Mecz trwa',
+        timerPhase === 'countdown' ? formatCountdownTime(countdownRemaining * 1000) : formatTime(matchRemaining)
+      );
       updateBackButtonLabel();
       stopTimer();
-      timerInterval = setInterval(tickTimer, 1000);
+      timerInterval = setInterval(tickTimer, 50);
       updateTimerControls();
+      enterBatteryMode();
       if (isStartingNewMatch && timerPhase === 'match') playMatchWhistle();
     }
 
     function pauseMatchTimer() {
       if (!isTimerRunning()) return;
+      updateRemainingFromClock();
       stopTimer();
+      leaveBatteryMode();
+      releaseMatchWakeLock();
       startMatchButton.disabled = false;
       startMatchButton.textContent = 'Wznów mecz';
-      timerLabelEl.textContent = 'Pauza';
+      setTimerText('Pauza', timerPhase === 'countdown' ? formatCountdownTime(countdownRemaining * 1000) : formatTime(matchRemaining));
       setDetailInputsEnabled(true);
       updateBackButtonLabel();
       updateTimerControls();
@@ -2574,12 +2759,16 @@
 
     function resetMatchTimer() {
       stopTimer();
+      leaveBatteryMode();
+      releaseMatchWakeLock();
       timerPhase = 'idle';
       countdownRemaining = settings.countdownDuration;
       matchRemaining = settings.matchDuration;
+      countdownEndTime = null;
+      matchEndTime = null;
+      lastMinuteSignalSecond = 0;
       clearPausedMatchState();
-      timerLabelEl.textContent = 'Gotowy';
-      timerDisplayEl.textContent = formatTime(settings.matchDuration);
+      setTimerText('Gotowy', formatTime(settings.matchDuration));
       startMatchButton.textContent = 'Start Mecz';
       startMatchButton.disabled = false;
       setDetailInputsEnabled(true);
@@ -2595,9 +2784,14 @@
       const pausedState = pausedMatchStates[matchIndex];
 
       stopTimer();
+      leaveBatteryMode();
+      releaseMatchWakeLock();
       timerPhase = isAlreadyComplete ? 'finished' : pausedState?.phase || 'idle';
       countdownRemaining = pausedState?.countdownRemaining ?? settings.countdownDuration;
       matchRemaining = pausedState?.matchRemaining ?? settings.matchDuration;
+      countdownEndTime = null;
+      matchEndTime = null;
+      lastMinuteSignalSecond = Math.floor((settings.matchDuration - matchRemaining) / 60) >= 2 ? 120 : Math.floor((settings.matchDuration - matchRemaining) / 60) >= 1 ? 60 : 0;
 
       detailTeam1FlagEl.innerHTML = teamFlagMarkup(match[0]);
       detailTeam2FlagEl.innerHTML = teamFlagMarkup(match[1]);
@@ -2610,18 +2804,19 @@
       updateDetailStrengths();
       updatePredictionPanel();
 
-      timerLabelEl.textContent = isAlreadyComplete
+      const timerLabel = isAlreadyComplete
         ? 'Koniec meczu'
         : pausedState
           ? 'Pauza'
           : 'Gotowy';
-      timerDisplayEl.textContent = isAlreadyComplete
+      const timerDisplay = isAlreadyComplete
         ? '0:00'
         : pausedState?.phase === 'countdown'
-          ? String(countdownRemaining)
+          ? formatCountdownTime(countdownRemaining * 1000)
           : pausedState?.phase === 'match'
             ? formatTime(matchRemaining)
             : formatTime(settings.matchDuration);
+      setTimerText(timerLabel, timerDisplay);
       startMatchButton.textContent = isAlreadyComplete ? 'Mecz zakończony' : pausedState ? 'Wznów mecz' : 'Start Mecz';
       startMatchButton.disabled = isAlreadyComplete;
       backToMenuButton.classList.add('is-visible');
@@ -2636,6 +2831,8 @@
     function returnToMenu() {
       savePausedMatchState();
       stopTimer();
+      leaveBatteryMode();
+      releaseMatchWakeLock();
       activeMatchIndex = null;
       topbarEl.classList.remove('is-hidden');
       setActiveScreen('matches');
@@ -2671,6 +2868,9 @@
       pausedMatchStates = {};
       countdownRemaining = settings.countdownDuration;
       matchRemaining = settings.matchDuration;
+      countdownEndTime = null;
+      matchEndTime = null;
+      lastMinuteSignalSecond = 0;
       saveSettings();
       renderMatches();
       renderAll();
@@ -2712,6 +2912,16 @@
     pauseMatchButton.addEventListener('click', pauseMatchTimer);
     resetMatchButton.addEventListener('click', resetMatchTimer);
     backToMenuButton.addEventListener('click', returnToMenu);
+    enterBatteryModeButton.addEventListener('click', enterBatteryMode);
+    closeBatteryModeButton.addEventListener('click', leaveBatteryMode);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isActiveTimerPhase()) requestMatchWakeLock();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && isBatteryModeVisible()) leaveBatteryMode();
+    });
 
     settingsOpenButton.addEventListener('click', openSettings);
     settingsCloseButton.addEventListener('click', closeSettings);
