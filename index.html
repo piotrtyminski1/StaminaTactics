@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Turniej 3v3</title>
+  <title>Turniej 2v2 — 5 graczy</title>
   <style>
     @font-face {
       font-display: fallback;
@@ -596,6 +596,14 @@
       color: var(--accent);
     }
 
+    .match-meta-bench {
+      color: #d6e5e9;
+      font-size: 9px;
+      line-height: 11px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
     .match-teams {
       min-width: 0;
       display: grid;
@@ -605,9 +613,17 @@
     .match-team-row {
       min-width: 0;
       display: grid;
-      grid-template-columns: 18px minmax(0, 1fr) 24px;
+      grid-template-columns: 36px 18px minmax(0, 1fr) 24px;
       align-items: center;
       gap: 7px;
+    }
+
+    .team-side {
+      color: var(--muted-2);
+      font-size: 8px;
+      line-height: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
     }
 
     .match-team-row.is-winner .team-players {
@@ -626,11 +642,11 @@
     }
 
     .team-flag.vertical {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--flag-parts, 2), 1fr);
     }
 
     .team-flag.horizontal {
-      grid-template-rows: repeat(3, 1fr);
+      grid-template-rows: repeat(var(--flag-parts, 2), 1fr);
     }
 
     .team-flag span {
@@ -988,7 +1004,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      max-width: 132px;
+      max-width: min(92vw, 360px);
       min-height: 22px;
       padding: 4px 7px;
       border-radius: 6px;
@@ -998,7 +1014,7 @@
       font-size: 9px;
       line-height: 12px;
       font-weight: 800;
-      white-space: nowrap;
+      white-space: normal;
     }
 
     .first-leg-result.is-visible {
@@ -1311,7 +1327,7 @@
       }
 
       .first-leg-result {
-        max-width: 120px;
+        max-width: min(92vw, 320px);
         font-size: 8px;
       }
 
@@ -1322,8 +1338,12 @@
       }
 
       .match-team-row {
-        grid-template-columns: 18px minmax(0, 1fr) 20px;
+        grid-template-columns: 32px 18px minmax(0, 1fr) 20px;
         gap: 5px;
+      }
+
+      .team-side {
+        font-size: 7px;
       }
 
       .match-meta {
@@ -1382,8 +1402,8 @@
         <button class="settings-trigger" type="button" id="settings-open" aria-label="Ustawienia">⚙</button>
         <div class="brand-logo">STAMINA<span>TACTICS</span></div>
         <div class="title-row">
-          <h1>Turniej 3v3</h1>
-          <div class="total" id="progress">0/20 wyników</div>
+          <h1>Turniej 2v2 • 5 graczy</h1>
+          <div class="total" id="progress">0/15 wyników</div>
         </div>
         <nav class="tabs" aria-label="Widoki">
           <button class="tab is-active" type="button" data-tab="matches">Mecze</button>
@@ -1414,28 +1434,13 @@
                 </span>
                 <input class="setting-input" id="setting-countdown-seconds" type="number" min="0" max="60" step="1" inputmode="numeric">
               </label>
-              <label class="setting-row">
+              <div class="setting-row">
                 <span>
-                  <span class="setting-label">Liczba piłkarzy</span>
-                  <span class="setting-hint">Zakres 4-7</span>
+                  <span class="setting-label">Format turnieju</span>
+                  <span class="setting-hint">Wszystkie możliwe składy</span>
                 </span>
-                <select class="setting-input setting-select" id="setting-player-count">
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                </select>
-              </label>
-              <label class="setting-row toggle-row">
-                <span>
-                  <span class="setting-label">Dwumecze</span>
-                  <span class="setting-hint">Rewanże w terminarzu</span>
-                </span>
-                <span class="toggle">
-                  <input id="setting-double-legs" type="checkbox">
-                  <span></span>
-                </span>
-              </label>
+                <strong class="setting-label">15 meczów • 2v2 + pauza</strong>
+              </div>
               <div class="setting-row">
                 <span>
                   <span class="setting-label">Edytuj Piłkarzy</span>
@@ -1480,7 +1485,7 @@
           </table>
         </div>
         <div class="standings-footer">
-          <span id="schedule-summary">20 meczów po 3 minuty</span>
+          <span id="schedule-summary">15 meczów • 6× gosp. / 6× gość • 3 min</span>
           <span>&rarr;</span>
         </div>
       </section>
@@ -1557,14 +1562,10 @@
       { name: 'Wałach', color: '#fbe247' },
       { name: 'Bartek', color: '#0085ff' },
       { name: 'Kamil', color: '#fdfdfd' },
-      { name: 'Soczek', color: '#00976a' },
-      { name: 'Kozon', color: '#020001' }
+      { name: 'Soczek', color: '#00976a' }
     ];
 
-    const editablePlayers = [
-      ...players,
-      { name: 'Gracz 7', color: '#ff9100' }
-    ];
+    const editablePlayers = [...players];
 
     const editablePlayerMap = Object.fromEntries(editablePlayers.map(player => [player.name, player]));
 
@@ -1580,24 +1581,13 @@
       '#020001'
     ];
 
-    const firstRoundMatches = [
-      [['Tymek', 'Wałach', 'Bartek'], ['Kamil', 'Soczek', 'Kozon']],
-      [['Tymek', 'Wałach', 'Kamil'], ['Bartek', 'Soczek', 'Kozon']],
-      [['Bartek', 'Kamil', 'Kozon'], ['Tymek', 'Wałach', 'Soczek']],
-      [['Bartek', 'Kamil', 'Soczek'], ['Tymek', 'Wałach', 'Kozon']],
-      [['Wałach', 'Soczek', 'Kozon'], ['Tymek', 'Bartek', 'Kamil']],
-      [['Tymek', 'Bartek', 'Soczek'], ['Wałach', 'Kamil', 'Kozon']],
-      [['Wałach', 'Kamil', 'Soczek'], ['Tymek', 'Bartek', 'Kozon']],
-      [['Wałach', 'Bartek', 'Kozon'], ['Tymek', 'Kamil', 'Soczek']],
-      [['Tymek', 'Kamil', 'Kozon'], ['Wałach', 'Bartek', 'Soczek']],
-      [['Tymek', 'Soczek', 'Kozon'], ['Wałach', 'Bartek', 'Kamil']]
-    ];
+    const firstRoundMatches = buildAllPossibleMatches();
 
-    const storageKey = 'stamina-tactics-3v3-results';
-    const flagStorageKey = 'stamina-tactics-3v3-flags';
-    const teamOrderStorageKey = 'stamina-tactics-3v3-team-orders';
-    const settingsStorageKey = 'stamina-tactics-3v3-settings';
-    const playerProfilesStorageKey = 'stamina-tactics-3v3-player-profiles';
+    const storageKey = 'stamina-tactics-2v2-all-lineups-results';
+    const flagStorageKey = 'stamina-tactics-2v2-five-flags';
+    const teamOrderStorageKey = 'stamina-tactics-2v2-five-team-orders';
+    const settingsStorageKey = 'stamina-tactics-2v2-five-settings';
+    const playerProfilesStorageKey = 'stamina-tactics-2v2-five-player-profiles';
     const matchSoundPaths = {
       ping: 'assets/audio/notification-ping-372479.mp3',
       pingDouble: 'assets/audio/ping%20x2.mp3',
@@ -1649,8 +1639,6 @@
     const settingsErrorEl = document.querySelector('#settings-error');
     const matchMinutesInput = document.querySelector('#setting-match-minutes');
     const countdownSecondsInput = document.querySelector('#setting-countdown-seconds');
-    const playerCountSelect = document.querySelector('#setting-player-count');
-    const doubleLegsInput = document.querySelector('#setting-double-legs');
     const editPlayersButton = document.querySelector('#edit-players');
     const playerEditorEl = document.querySelector('#player-editor');
     const detailScreenEl = document.querySelector('#detail-screen');
@@ -1695,9 +1683,7 @@
       const matchSeconds = clampNumber(rawSettings.matchDuration, 60, 1800, 180);
       return {
         matchDuration: Math.max(60, Math.min(1800, Math.round(matchSeconds / 60) * 60)),
-        countdownDuration: clampNumber(rawSettings.countdownDuration, 0, 60, 10),
-        playerCount: clampNumber(rawSettings.playerCount, 4, 7, 6),
-        doubleLegs: rawSettings.doubleLegs !== false
+        countdownDuration: clampNumber(rawSettings.countdownDuration, 0, 60, 10)
       };
     }
 
@@ -1812,13 +1798,49 @@
       settingsErrorEl.classList.remove('is-visible');
     }
 
+    function buildAllPossibleMatches() {
+      const playerNames = players.map(player => player.name);
+      const rawMatches = [];
+
+      for (let lineupIndex = 0; lineupIndex < 3; lineupIndex += 1) {
+        playerNames.forEach(benchPlayer => {
+          const activePlayers = playerNames.filter(name => name !== benchPlayer);
+          const possibleLineups = [
+            [[activePlayers[0], activePlayers[1]], [activePlayers[2], activePlayers[3]]],
+            [[activePlayers[0], activePlayers[2]], [activePlayers[1], activePlayers[3]]],
+            [[activePlayers[0], activePlayers[3]], [activePlayers[1], activePlayers[2]]]
+          ];
+          rawMatches.push([...possibleLineups[lineupIndex], benchPlayer]);
+        });
+      }
+
+      const targetHomeMatches = (rawMatches.length * 2) / playerNames.length;
+      const orientationCount = 2 ** rawMatches.length;
+
+      for (let orientationMask = 0; orientationMask < orientationCount; orientationMask += 1) {
+        const homeCounts = Object.fromEntries(playerNames.map(name => [name, 0]));
+        rawMatches.forEach((match, matchIndex) => {
+          const homeTeamIndex = (orientationMask >> matchIndex) & 1;
+          match[homeTeamIndex].forEach(name => {
+            homeCounts[name] += 1;
+          });
+        });
+
+        if (playerNames.every(name => homeCounts[name] === targetHomeMatches)) {
+          return rawMatches.map((match, matchIndex) => {
+            const shouldSwapTeams = Boolean((orientationMask >> matchIndex) & 1);
+            return shouldSwapTeams
+              ? [match[1], match[0], match[2]]
+              : [match[0], match[1], match[2]];
+          });
+        }
+      }
+
+      throw new Error('Nie udało się zbilansować stron gospodarzy i gości.');
+    }
+
     function buildMatches() {
-      return settings.doubleLegs
-        ? [
-          ...firstRoundMatches,
-          ...firstRoundMatches.map(match => [match[1], match[0]])
-        ]
-        : [...firstRoundMatches];
+      return [...firstRoundMatches];
     }
 
     function loadResults() {
@@ -1906,7 +1928,7 @@
       const orientation = getFlagOrientation(team);
       const flagTeam = teamDisplayOrder(team);
       return `
-        <span class="team-flag ${orientation}" aria-hidden="true">
+        <span class="team-flag ${orientation}" style="--flag-parts:${flagTeam.length}" aria-hidden="true">
           ${flagTeam.map(name => `<span style="background:${displayPlayerColor(name)}"></span>`).join('')}
         </span>
       `;
@@ -1930,25 +1952,25 @@
       const complete = isComplete(result);
       const team1Won = complete && result.team1 > result.team2;
       const team2Won = complete && result.team2 > result.team1;
-      const roundLabel = index < firstRoundMatches.length ? 'Mecz' : 'Rewanż';
-      const matchNumber = index < firstRoundMatches.length
-        ? index + 1
-        : index + 1 - firstRoundMatches.length;
+      const matchNumber = index + 1;
       return `
         <article class="match" data-open-match="${index}" role="button" tabindex="0">
           <div class="match-result-row">
             <div class="match-meta">
-              <span>${roundLabel} ${matchNumber}</span>
+              <span>Mecz ${matchNumber}</span>
               <span class="match-meta-duration">${formatDurationLabel(settings.matchDuration)}</span>
+              <span class="match-meta-bench">Pauzuje: ${escapeHtml(displayPlayerName(match[2]))}</span>
               ${complete ? '<span class="match-meta-status">Zakończony</span>' : ''}
             </div>
             <div class="match-teams">
               <div class="match-team-row ${team1Won ? 'is-winner' : ''}">
+                <span class="team-side">Gosp.</span>
                 ${teamFlagMarkup(match[0])}
                 <div class="team-players">${escapeHtml(teamName(match[0]))}</div>
                 ${resultValueMarkup(result.team1)}
               </div>
               <div class="match-team-row ${team2Won ? 'is-winner' : ''}">
+                <span class="team-side">Goście</span>
                 ${teamFlagMarkup(match[1])}
                 <div class="team-players">${escapeHtml(teamName(match[1]))}</div>
                 ${resultValueMarkup(result.team2)}
@@ -1970,12 +1992,11 @@
     }
 
     function renderMatches() {
-      const firstRound = matches.slice(0, firstRoundMatches.length);
-      const secondRound = matches.slice(firstRoundMatches.length);
-      matchesEl.innerHTML = [
-        roundMarkup('Runda Pierwsza', 0, firstRound),
-        roundMarkup('Runda Rewanżowa', firstRoundMatches.length, secondRound)
-      ].join('');
+      matchesEl.innerHTML = [0, 1, 2].map(seriesIndex => {
+        const startIndex = seriesIndex * players.length;
+        const seriesMatches = matches.slice(startIndex, startIndex + players.length);
+        return roundMarkup(`Seria ${seriesIndex + 1} • każdy raz pauzuje`, startIndex, seriesMatches);
+      }).join('');
     }
 
     function emptyStats(player) {
@@ -1994,17 +2015,6 @@
 
     function isComplete(result) {
       return Number.isInteger(result?.team1) && Number.isInteger(result?.team2);
-    }
-
-    function getFirstLegIndex(matchIndex) {
-      return matchIndex >= firstRoundMatches.length ? matchIndex - firstRoundMatches.length : null;
-    }
-
-    function firstLegResultText(matchIndex) {
-      const firstLegIndex = getFirstLegIndex(matchIndex);
-      if (firstLegIndex === null) return '';
-      const result = results[firstLegIndex] || {};
-      return `Pierwszy mecz: ${isComplete(result) ? `${result.team1}-${result.team2}` : '-:-'}`;
     }
 
     function initialRatings() {
@@ -2340,14 +2350,12 @@
     }
 
     function renderScheduleSummary() {
-      scheduleSummaryEl.textContent = `${matches.length} meczów po ${formatDurationLabel(settings.matchDuration)}`;
+      scheduleSummaryEl.textContent = `${matches.length} meczów • 6× gosp. / 6× gość • ${formatDurationLabel(settings.matchDuration)}`;
     }
 
     function renderSettingsForm() {
       matchMinutesInput.value = String(settings.matchDuration / 60);
       countdownSecondsInput.value = String(settings.countdownDuration);
-      playerCountSelect.value = String(settings.playerCount);
-      doubleLegsInput.checked = settings.doubleLegs;
     }
 
     function playerProfileMarkup(player, index) {
@@ -2394,6 +2402,7 @@
         detailTeam2FlagEl.innerHTML = teamFlagMarkup(match[1]);
         detailTeam1NameEl.textContent = teamName(match[0]);
         detailTeam2NameEl.textContent = teamName(match[1]);
+        firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(match[2])}`;
       }
     }
 
@@ -2669,7 +2678,7 @@
       saveResults();
       renderMatches();
       renderAll();
-      firstLegResultEl.textContent = firstLegResultText(activeMatchIndex);
+      firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(matches[activeMatchIndex][2])}`;
       updateDetailStrengths();
       updatePredictionPanel();
     }
@@ -2816,8 +2825,8 @@
       detailTeam2NameEl.textContent = teamName(match[1]);
       detailTeam1ScoreEl.value = result.team1 ?? '';
       detailTeam2ScoreEl.value = result.team2 ?? '';
-      firstLegResultEl.textContent = firstLegResultText(matchIndex);
-      firstLegResultEl.classList.toggle('is-visible', getFirstLegIndex(matchIndex) !== null);
+      firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(match[2])}`;
+      firstLegResultEl.classList.add('is-visible');
       updateDetailStrengths();
       updatePredictionPanel();
 
@@ -2877,9 +2886,7 @@
     function applySettingsFromForm() {
       settings = normalizeSettings({
         matchDuration: Number(matchMinutesInput.value) * 60,
-        countdownDuration: Number(countdownSecondsInput.value),
-        playerCount: Number(playerCountSelect.value),
-        doubleLegs: doubleLegsInput.checked
+        countdownDuration: Number(countdownSecondsInput.value)
       });
       matches = buildMatches();
       pausedMatchStates = {};
@@ -2956,8 +2963,6 @@
     });
     matchMinutesInput.addEventListener('change', applySettingsFromForm);
     countdownSecondsInput.addEventListener('change', applySettingsFromForm);
-    playerCountSelect.addEventListener('change', applySettingsFromForm);
-    doubleLegsInput.addEventListener('change', applySettingsFromForm);
     playerEditorEl.addEventListener('input', event => {
       const input = event.target.closest('.profile-name-input');
       if (!input) return;
