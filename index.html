@@ -829,64 +829,6 @@
 
     .player-avatar { width: 38px; height: 38px; font-size: 13px; }
 
-    .avatar-tuning-panel {
-      position: fixed;
-      top: 50%;
-      right: 8px;
-      z-index: 1000;
-      width: 154px;
-      display: grid;
-      gap: 13px;
-      padding: 12px;
-      transform: translateY(-50%);
-      border: 1px solid #24505d;
-      border-radius: 8px;
-      background: rgba(1, 10, 15, .96);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, .42);
-    }
-
-    .avatar-tuning-title {
-      margin: 0;
-      color: var(--text);
-      font-size: 10px;
-      line-height: 13px;
-      font-weight: 800;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-
-    .avatar-tuning-control {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 4px 8px;
-      color: var(--muted);
-      font-size: 8px;
-      line-height: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .avatar-tuning-control output {
-      color: var(--text);
-      font-family: "Roboto Mono", monospace;
-      font-size: 8px;
-    }
-
-    .avatar-tuning-control input[type="range"] {
-      width: 100%;
-      height: 16px;
-      grid-column: 1 / -1;
-      margin: 0;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    @media (min-width: 780px) {
-      .avatar-tuning-panel {
-        right: max(12px, calc((100vw - 430px) / 2 - 174px));
-      }
-    }
-
     .player-card-name {
       display: block;
       overflow: hidden;
@@ -2868,17 +2810,6 @@
       />
     </defs>
   </svg>
-  <aside class="avatar-tuning-panel" aria-label="Panel ustawień miniaturek">
-    <h2 class="avatar-tuning-title">Miniaturki zawodników</h2>
-    <label class="avatar-tuning-control">
-      <span>Photo scale</span><output data-avatar-output="photoScale">127%</output>
-      <input type="range" data-avatar-control="photoScale" min="50" max="220" step="1" value="127">
-    </label>
-    <label class="avatar-tuning-control">
-      <span>Circle size</span><output data-avatar-output="circleSize">94%</output>
-      <input type="range" data-avatar-control="circleSize" min="30" max="100" step="1" value="94">
-    </label>
-  </aside>
   <main class="app">
     <section class="launcher" id="launcher">
       <section class="launcher-view" id="launcher-home">
@@ -6970,40 +6901,6 @@
       notice.textContent = storageLoadError;
       launcherHomeEl.querySelector('.launcher-content')?.prepend(notice);
     }
-    })();
-  </script>
-  <script>
-    (() => {
-      const controls = [...document.querySelectorAll('[data-avatar-control]')];
-      const outputs = Object.fromEntries(
-        [...document.querySelectorAll('[data-avatar-output]')].map(output => [output.dataset.avatarOutput, output])
-      );
-      const rootStyle = document.documentElement.style;
-
-      function avatarPhotoClip(circleSize) {
-        const radius = circleSize / 2;
-        const points = ['-200% -200%', '200% -200%', '200% 50%'];
-        for (let angle = 0; angle <= 180; angle += 15) {
-          const radians = angle * Math.PI / 180;
-          const x = Math.round((50 + Math.cos(radians) * radius) * 100) / 100;
-          const y = Math.round((50 + Math.sin(radians) * radius) * 100) / 100;
-          points.push(`${x}% ${y}%`);
-        }
-        points.push('-200% 50%');
-        return `polygon(${points.join(', ')})`;
-      }
-
-      function applyAvatarTuning() {
-        const values = Object.fromEntries(controls.map(control => [control.dataset.avatarControl, Number(control.value)]));
-        rootStyle.setProperty('--avatar-photo-scale', values.photoScale / 100);
-        rootStyle.setProperty('--avatar-circle-size', `${values.circleSize}%`);
-        rootStyle.setProperty('--avatar-photo-clip', avatarPhotoClip(values.circleSize));
-        outputs.photoScale.value = `${values.photoScale}%`;
-        outputs.circleSize.value = `${values.circleSize}%`;
-      }
-
-      controls.forEach(control => control.addEventListener('input', applyAvatarTuning));
-      applyAvatarTuning();
     })();
   </script>
 </body>
