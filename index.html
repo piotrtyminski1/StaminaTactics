@@ -796,11 +796,11 @@
     }
 
     .tier-avatar.is-common {
-      --avatar-border: #b8bec1;
-      --avatar-background: #858b8e;
+      --avatar-border: rgba(232, 238, 240, .36);
+      --avatar-background: linear-gradient(145deg, #41484c 0%, #30373a 52%, #202629 100%);
       border-color: transparent;
       background: transparent;
-      color: #171c1f;
+      color: #f0f3f4;
     }
 
     .tier-avatar.is-bronze {
@@ -825,6 +825,12 @@
       border-color: transparent;
       background: transparent;
       color: #2c220e;
+    }
+
+    .tier-avatar.is-gold::before {
+      box-shadow:
+        0 0 3px rgba(255, 231, 132, .26),
+        0 0 9px rgba(217, 174, 67, .16);
     }
 
     .player-avatar { width: 38px; height: 38px; font-size: 13px; }
@@ -902,6 +908,66 @@
       line-height: 12px;
     }
 
+    .fifa-card-stage {
+      position: relative;
+      width: min(238.12px, 76vw);
+      aspect-ratio: 238.12 / 344;
+      height: auto;
+      margin: 18px auto 6px;
+      overflow: visible;
+      isolation: isolate;
+    }
+
+    .fifa-card-glow {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .fifa-card-stage.is-gold > .fifa-card-glow {
+      display: block;
+      transform-origin: center;
+      animation: gold-card-glow-pulse 4.2s ease-in-out infinite;
+      will-change: opacity, transform;
+    }
+
+    @keyframes gold-card-glow-pulse {
+      0%,
+      100% {
+        opacity: .72;
+        transform: scale(.995);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.012);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fifa-card-stage.is-gold > .fifa-card-glow {
+        animation: none;
+        opacity: .86;
+        transform: none;
+      }
+    }
+
+    .fifa-card-glow-wide {
+      fill: #eabf3f;
+      fill-opacity: .25;
+      filter: url(#gold-card-glow-wide);
+    }
+
+    .fifa-card-glow-near {
+      fill: #ffe884;
+      fill-opacity: .25;
+      filter: url(#gold-card-glow-near);
+    }
+
     .fifa-attribute-card {
       --card-text: #2c220e;
       --card-glow: rgba(255, 245, 166, .88);
@@ -918,10 +984,10 @@
       --card-silhouette: rgba(91, 59, 10, .32);
       --card-silhouette-body: rgba(91, 59, 10, .3);
       position: relative;
-      width: min(238.12px, 76vw);
-      aspect-ratio: 238.12 / 344;
-      height: auto;
-      margin: 18px auto 6px;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      margin: 0;
       overflow: hidden;
       clip-path: none;
       -webkit-clip-path: url(#player-card-shape);
@@ -1946,16 +2012,18 @@
     }
 
     .table-wrap {
-      overflow-x: hidden;
+      overflow-x: auto;
       padding: 8px;
       background: var(--bg);
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
+      min-width: 390px;
       border-collapse: collapse;
       table-layout: fixed;
-      overflow: hidden;
+      overflow: visible;
       background: var(--panel);
       border-radius: var(--radius);
     }
@@ -1993,7 +2061,7 @@
     }
 
     .name-cell {
-      width: 74px;
+      width: 110px;
     }
 
     .name {
@@ -2008,6 +2076,8 @@
       max-width: 100%;
       display: inline-flex;
       align-items: center;
+      gap: 12px;
+      overflow: visible;
       padding: 4px 0;
       border: 0;
       background: transparent;
@@ -2022,16 +2092,33 @@
       outline-offset: 2px;
     }
 
-    .name span:last-child {
+    .name > span:last-child {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .name .swatch {
-      width: 9px;
-      height: 9px;
-      border-radius: 2px;
+    .standings-avatar {
+      width: 26px;
+      height: 26px;
+      flex: 0 0 26px;
+      font-size: 8px;
+      --avatar-photo-scale: 1.27;
+    }
+
+    .standings-player-link > span:last-child {
+      flex: 0 0 auto;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    #standings tr,
+    #standings td {
+      overflow: visible;
+    }
+
+    #standings td {
+      height: 52px;
     }
 
     .stat {
@@ -2773,7 +2860,7 @@
       }
 
       .name-cell {
-        width: 66px;
+        width: 105px;
       }
 
       .stat {
@@ -2808,6 +2895,26 @@
         id="player-card-outline"
         d="M238.12,34.86v246.74s-119.06,32.77-119.06,62.4c0-14.82-29.76-30.29-59.53-42.06-29.77-11.77-59.53-19.84-59.53-19.84V35.36C77.81,35.36,51.87,0,119.06,0c33.6,0,43.91,8.72,55.55,17.43,11.64,8.71,24.61,17.43,63.51,17.43Z"
       />
+      <filter
+        id="gold-card-glow-wide"
+        x="-75"
+        y="-75"
+        width="388.12"
+        height="494"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB">
+        <feGaussianBlur stdDeviation="18" />
+      </filter>
+      <filter
+        id="gold-card-glow-near"
+        x="-40"
+        y="-40"
+        width="318.12"
+        height="424"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB">
+        <feGaussianBlur stdDeviation="7" />
+      </filter>
     </defs>
   </svg>
   <main class="app">
@@ -3442,6 +3549,7 @@
 
     const tournamentRegistryKey = 'stamina-tactics-universal-tournaments-v1';
     const playerRegistryKey = 'stamina-tactics-universal-players-v1';
+    const historicalMatchOrderMigrationKey = 'stamina-tactics-historical-match-order-v1';
     const basePlayers = [
       { name: 'Tymek', color: '#ed263d' },
       { name: 'Wałach', color: '#fbe247' },
@@ -3492,10 +3600,11 @@
     let playerProfilesStorageKey = 'stamina-tactics-universal-bootstrap-player-profiles';
     let seriesStorageKey = 'stamina-tactics-universal-bootstrap-series';
     let seriesPlanStorageKey = 'stamina-tactics-universal-bootstrap-series-plan';
+    let matchDisplayOrderStorageKey = 'stamina-tactics-universal-bootstrap-display-order';
     const matchSoundPaths = {
-      ping: 'Stamina%20Tactics/assets/audio/notification-ping-372479.mp3',
-      pingDouble: 'Stamina%20Tactics/assets/audio/ping%20x2.mp3',
-      whistle: 'Stamina%20Tactics/assets/audio/referee-whistle-291816.mp3'
+      ping: 'assets/audio/notification-ping-372479.mp3',
+      pingDouble: 'assets/audio/ping%20x2.mp3',
+      whistle: 'assets/audio/referee-whistle-291816.mp3'
     };
     const soundClipSeconds = 2;
     const initialEloRating = 1000;
@@ -3524,6 +3633,7 @@
     let currentTournamentMeta = null;
     let cachedGlobalEloState = null;
     let cachedPlayerAttributeState = null;
+    let cachedHistoricalPlayerAttributeStates = new Map();
     let playerRegistry = loadPlayerRegistry();
     let selectedNewTournamentPlayerIds = new Set();
     let playerProfileMatchLimit = 10;
@@ -3534,6 +3644,7 @@
     let pendingPlayerPhoto = '';
     let tournamentRegistry = loadTournamentRegistry();
     migrateTournamentPlayerLinks();
+    migrateHistoricalMatchDisplayOrders();
     let settings = loadSettings();
     let matches = buildMatches();
     let playerOrder = Object.fromEntries(players.map((player, index) => [player.name, index]));
@@ -3541,6 +3652,7 @@
     let results = loadResults();
     let flagOrientations = loadFlagOrientations();
     let teamOrders = loadTeamOrders();
+    let matchDisplayOrder = [];
     let activeMatchIndex = null;
     let timerInterval = null;
     let timerPhase = 'idle';
@@ -3699,6 +3811,7 @@
       setStaminaStorageItem(playerRegistryKey, JSON.stringify(playerRegistry));
       cachedGlobalEloState = null;
       cachedPlayerAttributeState = null;
+      cachedHistoricalPlayerAttributeStates.clear();
     }
 
     function registryPlayer(playerId) {
@@ -3766,6 +3879,7 @@
       setStaminaStorageItem(tournamentRegistryKey, JSON.stringify(tournamentRegistry));
       cachedGlobalEloState = null;
       cachedPlayerAttributeState = null;
+      cachedHistoricalPlayerAttributeStates.clear();
     }
 
     function tournamentStoragePrefix(tournamentId) {
@@ -3781,6 +3895,7 @@
       playerProfilesStorageKey = `${prefix}-player-profiles`;
       seriesStorageKey = `${prefix}-series`;
       seriesPlanStorageKey = `${prefix}-series-plan`;
+      matchDisplayOrderStorageKey = `${prefix}-display-order`;
     }
 
     function formatTournamentDate(timestamp) {
@@ -3970,7 +4085,7 @@
       if (!window.confirm(`Czy na pewno usunąć turniej „${tournament.name}”?${resultWarning} Tej operacji nie można cofnąć.`)) return;
 
       const prefix = tournamentStoragePrefix(tournament.id);
-      ['results', 'flags', 'team-orders', 'settings', 'player-profiles', 'series', 'series-plan']
+      ['results', 'flags', 'team-orders', 'settings', 'player-profiles', 'series', 'series-plan', 'display-order']
         .forEach(suffix => removeStaminaStorageItem(`${prefix}-${suffix}`));
       tournamentRegistry = tournamentRegistry.filter(item => item.id !== tournament.id);
       saveTournamentRegistry();
@@ -4002,6 +4117,41 @@
       return savedSettings.doubleLegs
         ? [...firstRound, ...firstRound.map(match => match[2] ? [match[1], match[0], match[2]] : [match[1], match[0]])]
         : firstRound;
+    }
+
+    function migrateHistoricalMatchDisplayOrders() {
+      if (localStorage.getItem(historicalMatchOrderMigrationKey) === '1') return;
+
+      tournamentRegistry
+        .filter(tournament => Number.isFinite(tournament.finishedAt))
+        .forEach(tournament => {
+          const prefix = tournamentStoragePrefix(tournament.id);
+          const schedule = tournamentScheduleForStatistics(tournament);
+          let savedResults = [];
+          try {
+            savedResults = JSON.parse(localStorage.getItem(`${prefix}-results`)) || [];
+          } catch {}
+          if (!schedule.length || !Array.isArray(savedResults)) return;
+
+          const naturalOrder = Array.from({ length: schedule.length }, (_, index) => index);
+          const chronologicalOrder = [...naturalOrder].sort((indexA, indexB) => {
+            const resultA = savedResults[indexA];
+            const resultB = savedResults[indexB];
+            const completeA = Number.isInteger(resultA?.team1) && Number.isInteger(resultA?.team2);
+            const completeB = Number.isInteger(resultB?.team1) && Number.isInteger(resultB?.team2);
+            if (completeA !== completeB) return completeA ? -1 : 1;
+
+            const timestampA = Number.isFinite(resultA?.completedAt) ? resultA.completedAt : Infinity;
+            const timestampB = Number.isFinite(resultB?.completedAt) ? resultB.completedAt : Infinity;
+            return timestampA - timestampB || indexA - indexB;
+          });
+
+          if (chronologicalOrder.some((matchIndex, position) => matchIndex !== naturalOrder[position])) {
+            setStaminaStorageItem(`${prefix}-display-order`, JSON.stringify(chronologicalOrder));
+          }
+        });
+
+      setStaminaStorageItem(historicalMatchOrderMigrationKey, '1');
     }
 
     function globalEloMatchKey(tournamentId, matchIndex) {
@@ -4311,12 +4461,17 @@
       return { attackEffects, defenceEffects, games, formatBaselines };
     }
 
-    function buildPlayerAttributeState() {
-      const fitted = fitPlayerAttributeEffects();
-      const eloState = globalEloState();
-      const ratedPlayerIds = Object.keys(eloState.games).filter(playerId => eloState.games[playerId] > 0);
+    function buildPlayerAttributeState(
+      sourceEvents = completedGlobalEloEvents(),
+      eloRatings = globalEloState().ratings
+    ) {
+      const fitted = fitPlayerAttributeEffects(sourceEvents);
+      const ratedPlayerIds = [...new Set(sourceEvents.flatMap(event => [...event.teamA, ...event.teamB]))];
       const meanElo = ratedPlayerIds.length
-        ? ratedPlayerIds.reduce((sum, playerId) => sum + eloState.ratings[playerId], 0) / ratedPlayerIds.length
+        ? ratedPlayerIds.reduce(
+          (sum, playerId) => sum + (eloRatings[playerId] ?? initialEloRating),
+          0
+        ) / ratedPlayerIds.length
         : initialEloRating;
       const byPlayer = {};
 
@@ -4345,7 +4500,7 @@
           99
         ));
         const eloScore = gamesPlayed
-          ? mapAttributeSignal(((eloState.ratings[player.id] ?? initialEloRating) - meanElo) / 180)
+          ? mapAttributeSignal(((eloRatings[player.id] ?? initialEloRating) - meanElo) / 180)
           : playerAttributeBaseScore;
         const overall = Math.round(clamp(0.5 * eloScore + 0.25 * attack + 0.25 * defence, 40, 99));
         byPlayer[player.id] = { attack, defence, overall, games: gamesPlayed };
@@ -4366,6 +4521,25 @@
         overall: playerAttributeBaseScore,
         games: 0
       };
+    }
+
+    function playerAttributeStateBeforeMatch(tournamentId, matchIndex) {
+      const key = globalEloMatchKey(tournamentId, matchIndex);
+      if (cachedHistoricalPlayerAttributeStates.has(key)) {
+        return cachedHistoricalPlayerAttributeStates.get(key);
+      }
+
+      const events = completedGlobalEloEvents();
+      const targetEventIndex = events.findIndex(event => event.key === key);
+      if (targetEventIndex < 0) return playerAttributeState();
+
+      const ratingsBefore = globalEloState().transactions.get(key)?.ratingsBefore || {};
+      const historicalState = buildPlayerAttributeState(
+        events.slice(0, targetEventIndex),
+        ratingsBefore
+      );
+      cachedHistoricalPlayerAttributeStates.set(key, historicalState);
+      return historicalState;
     }
 
     function playerCardTier(overall) {
@@ -4443,11 +4617,19 @@
       return stats;
     }
 
-    function playerAvatarMarkup(player, className = 'player-avatar', overlayMarkup = '') {
+    function playerAvatarMarkup(
+      player,
+      className = 'player-avatar',
+      overlayMarkup = '',
+      overallOverride = null
+    ) {
       const content = player.photo
         ? `<span class="avatar-photo-layer" aria-hidden="true"><img src="${escapeHtml(player.photo)}" alt=""></span>`
         : escapeHtml(playerInitials(playerNickname(player)));
-      const tier = playerCardTier(playerAttributes(player.id).overall);
+      const overall = Number.isFinite(overallOverride)
+        ? overallOverride
+        : playerAttributes(player.id).overall;
+      const tier = playerCardTier(overall);
       return `<span class="${className} tier-avatar ${tier.className}">${content}${overlayMarkup}</span>`;
     }
 
@@ -4566,26 +4748,32 @@
         `
         : '';
       playerDetailEl.innerHTML = `
-        <section
-          class="fifa-attribute-card ${cardTier.className}"
-          aria-label="${cardTier.label} karta zawodnika: OVR ${attributes.overall}, ATT ${attributes.attack}, DEF ${attributes.defence}">
-          <div class="fifa-card-rating"><strong>${attributes.overall}</strong><span>OVR</span></div>
-          <div class="fifa-card-portrait ${player.photo ? 'has-photo' : ''}" aria-hidden="true">${cardPortrait}</div>
-          <div class="fifa-card-name">${escapeHtml(playerNickname(player))}</div>
-          <div class="fifa-card-stats">
-            <div class="fifa-card-stat"><strong>${attributes.attack}</strong><span>ATT</span></div>
-            <div class="fifa-card-stat"><strong>${attributes.defence}</strong><span>DEF</span></div>
-          </div>
-          <svg class="fifa-card-frame" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
-            <use class="fifa-card-frame-bevel-shadow" href="#player-card-outline"></use>
-            <use class="fifa-card-frame-bevel-highlight" href="#player-card-outline"></use>
-            <use
-              class="fifa-card-frame-stroke"
-              href="#player-card-outline"
-              transform="translate(4 4) scale(0.966403494 0.976744186)">
-            </use>
+        <div class="fifa-card-stage ${cardTier.className}">
+          <svg class="fifa-card-glow" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
+            <use class="fifa-card-glow-wide" href="#player-card-outline"></use>
+            <use class="fifa-card-glow-near" href="#player-card-outline"></use>
           </svg>
-        </section>
+          <section
+            class="fifa-attribute-card ${cardTier.className}"
+            aria-label="${cardTier.label} karta zawodnika: OVR ${attributes.overall}, ATT ${attributes.attack}, DEF ${attributes.defence}">
+            <div class="fifa-card-rating"><strong>${attributes.overall}</strong><span>OVR</span></div>
+            <div class="fifa-card-portrait ${player.photo ? 'has-photo' : ''}" aria-hidden="true">${cardPortrait}</div>
+            <div class="fifa-card-name">${escapeHtml(playerNickname(player))}</div>
+            <div class="fifa-card-stats">
+              <div class="fifa-card-stat"><strong>${attributes.attack}</strong><span>ATT</span></div>
+              <div class="fifa-card-stat"><strong>${attributes.defence}</strong><span>DEF</span></div>
+            </div>
+            <svg class="fifa-card-frame" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
+              <use class="fifa-card-frame-bevel-shadow" href="#player-card-outline"></use>
+              <use class="fifa-card-frame-bevel-highlight" href="#player-card-outline"></use>
+              <use
+                class="fifa-card-frame-stroke"
+                href="#player-card-outline"
+                transform="translate(4 4) scale(0.966403494 0.976744186)">
+              </use>
+            </svg>
+          </section>
+        </div>
         <section class="player-profile-head">
           ${playerAvatarMarkup(player, 'player-detail-avatar')}
           <span class="player-profile-info">
@@ -4832,6 +5020,7 @@
         firstRoundMatches = buildBaseMatchesForFormat(tournament.format, players.map(player => player.name));
       }
       matches = buildMatches();
+      matchDisplayOrder = loadMatchDisplayOrder();
       pausedMatchStates = {};
       activeMatchIndex = null;
       countdownRemaining = settings.countdownDuration;
@@ -5278,10 +5467,24 @@
       }
     }
 
+    function loadMatchDisplayOrder() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(matchDisplayOrderStorageKey));
+        const expectedIndices = Array.from({ length: matches.length }, (_, index) => index);
+        const isValid = Array.isArray(saved)
+          && saved.length === matches.length
+          && expectedIndices.every(index => saved.includes(index));
+        return isValid ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
     function saveResults() {
       setStaminaStorageItem(storageKey, JSON.stringify(results));
       cachedGlobalEloState = null;
       cachedPlayerAttributeState = null;
+      cachedHistoricalPlayerAttributeStates.clear();
       touchCurrentTournament();
     }
 
@@ -5376,16 +5579,19 @@
       return `${formatTime(totalSeconds)}`;
     }
 
-    function matchMarkup(match, index) {
+    function matchMarkup(match, index, chronologicalNumber = null) {
       const result = results[index] || {};
       const complete = isComplete(result);
       const team1Won = complete && result.team1 > result.team2;
       const team2Won = complete && result.team2 > result.team1;
       const isReturnLeg = index >= firstRoundMatches.length;
-      const roundLabel = isReturnLeg ? 'Rewanż' : 'Mecz';
-      const matchNumber = !isReturnLeg
-        ? index + 1
-        : index + 1 - firstRoundMatches.length;
+      const usesChronologicalOrder = Number.isInteger(chronologicalNumber);
+      const roundLabel = usesChronologicalOrder ? 'Mecz' : isReturnLeg ? 'Rewanż' : 'Mecz';
+      const matchNumber = usesChronologicalOrder
+        ? chronologicalNumber
+        : !isReturnLeg
+          ? index + 1
+          : index + 1 - firstRoundMatches.length;
       return `
         <article class="match" data-open-match="${index}" role="button" tabindex="0">
           <div class="match-result-row">
@@ -5427,6 +5633,18 @@
     function renderMatches() {
       const format = currentTournamentMeta?.format || 6;
       const baseMatchCount = firstRoundMatches.length;
+
+      if (matchDisplayOrder.length === matches.length) {
+        matchesEl.innerHTML = `
+          <section class="match-round">
+            <div class="match-round-title">Kolejność rozegrania</div>
+            ${matchDisplayOrder
+              .map((matchIndex, position) => matchMarkup(matches[matchIndex], matchIndex, position + 1))
+              .join('')}
+          </section>
+        `;
+        return;
+      }
 
       function matchSetMarkup(startIndex, isReturnLeg) {
         const setMatches = matches.slice(startIndex, startIndex + baseMatchCount);
@@ -5765,9 +5983,21 @@
 
     function buildStandings() {
       const table = Object.fromEntries(players.map(player => [player.name, emptyStats(player)]));
-      matches.forEach((match, index) => {
-        const result = results[index];
-        if (!isComplete(result)) return;
+      const completedMatches = matches
+        .map((match, index) => ({ match, index, result: results[index] }))
+        .filter(entry => isComplete(entry.result))
+        .sort((entryA, entryB) => {
+          const fallbackTimestamp = currentTournamentMeta?.createdAt || 0;
+          const timestampA = Number.isFinite(entryA.result.completedAt)
+            ? entryA.result.completedAt
+            : fallbackTimestamp + entryA.index;
+          const timestampB = Number.isFinite(entryB.result.completedAt)
+            ? entryB.result.completedAt
+            : fallbackTimestamp + entryB.index;
+          return timestampA - timestampB || entryA.index - entryB.index;
+        });
+
+      completedMatches.forEach(({ match, result }) => {
         applyTeamStats(table, match[0], result.team1, result.team2);
         applyTeamStats(table, match[1], result.team2, result.team1);
       });
@@ -5835,14 +6065,22 @@
       `;
     }
 
-    function matchLineupPlayerMarkup(canonicalName, side) {
+    function matchLineupPlayerMarkup(canonicalName, side, attributeState, overallSnapshot) {
       const playerId = tournamentPlayerId(currentTournamentMeta, canonicalName);
       const player = registryPlayer(playerId);
       const nickname = player ? playerNickname(player) : canonicalName;
-      const overall = player ? playerAttributes(player.id).overall : playerAttributeBaseScore;
+      const snapshottedOverall = player ? Number(overallSnapshot?.[player.id]) : NaN;
+      const historicalOverall = player
+        ? attributeState?.byPlayer[player.id]?.overall
+        : playerAttributeBaseScore;
+      const overall = Number.isFinite(snapshottedOverall)
+        ? snapshottedOverall
+        : Number.isFinite(historicalOverall)
+          ? historicalOverall
+          : playerAttributeBaseScore;
       const topFormMarkup = matchTopFormMarkup(canonicalName);
       const avatar = player
-        ? playerAvatarMarkup(player, 'match-lineup-avatar', topFormMarkup)
+        ? playerAvatarMarkup(player, 'match-lineup-avatar', topFormMarkup, overall)
         : `<span class="match-lineup-avatar tier-avatar is-bronze">${escapeHtml(playerInitials(nickname))}${topFormMarkup}</span>`;
       const nameMarkup = `<span class="match-lineup-name">${escapeHtml(nickname)}</span>`;
       const overallMarkup = `<strong class="match-lineup-overall">${overall}</strong>`;
@@ -5860,8 +6098,24 @@
     }
 
     function renderMatchLineups(match) {
-      detailLineupTeam1El.innerHTML = match[0].map(name => matchLineupPlayerMarkup(name, 'home')).join('');
-      detailLineupTeam2El.innerHTML = match[1].map(name => matchLineupPlayerMarkup(name, 'away')).join('');
+      const matchResult = results[activeMatchIndex] || {};
+      const overallSnapshot = matchResult.overallSnapshot && typeof matchResult.overallSnapshot === 'object'
+        ? matchResult.overallSnapshot
+        : null;
+      const participantIds = [...match[0], ...match[1]]
+        .map(name => tournamentPlayerId(currentTournamentMeta, name))
+        .filter(Boolean);
+      const hasCompleteSnapshot = overallSnapshot
+        && participantIds.every(playerId => Number.isFinite(Number(overallSnapshot[playerId])));
+      const attributeState = hasCompleteSnapshot
+        ? null
+        : playerAttributeStateBeforeMatch(currentTournamentMeta.id, activeMatchIndex);
+      detailLineupTeam1El.innerHTML = match[0]
+        .map(name => matchLineupPlayerMarkup(name, 'home', attributeState, overallSnapshot))
+        .join('');
+      detailLineupTeam2El.innerHTML = match[1]
+        .map(name => matchLineupPlayerMarkup(name, 'away', attributeState, overallSnapshot))
+        .join('');
     }
 
     function updatePredictionPanel() {
@@ -5895,7 +6149,7 @@
       if (!form.length) return '<span class="empty-form">-</span>';
       return `
         <span class="form">
-          ${form.slice(-5).map(item => {
+          ${form.slice(-5).reverse().map(item => {
             const className = item === 'W' ? 'win' : item === 'L' ? 'loss' : 'draw';
             return `<span class="form-chip ${className}">${item}</span>`;
           }).join('')}
@@ -5909,6 +6163,10 @@
         const balance = player.goalsFor - player.goalsAgainst;
         const balanceLabel = balance > 0 ? `+${balance}` : String(balance);
         const playerId = tournamentPlayerId(currentTournamentMeta, player.name);
+        const registryEntry = registryPlayer(playerId);
+        const avatar = registryEntry
+          ? playerAvatarMarkup(registryEntry, 'player-avatar standings-avatar')
+          : `<span class="player-avatar standings-avatar tier-avatar is-bronze">${escapeHtml(playerInitials(displayPlayerName(player.name)))}</span>`;
         return `
           <tr>
             <td class="rank">${index + 1}</td>
@@ -5918,7 +6176,7 @@
                 type="button"
                 data-tournament-player-profile="${escapeHtml(playerId || '')}"
                 data-player-profile-source="table">
-                  <span class="swatch" style="background:${displayPlayerColor(player.name)}"></span>
+                  ${avatar}
                   <span>${escapeHtml(displayPlayerName(player.name))}</span>
               </button>
             </td>
@@ -6132,20 +6390,37 @@
       return soundContext;
     }
 
+    async function fetchSoundFile(src) {
+      const candidates = [src, `Stamina%20Tactics/${src}`];
+      let lastError = null;
+      for (const candidate of candidates) {
+        try {
+          const response = await fetch(candidate);
+          if (!response.ok) throw new Error(`HTTP ${response.status} dla ${candidate}`);
+          return response.arrayBuffer();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error(`Nie udało się pobrać ${src}`);
+    }
+
     function loadSoundBuffer(src) {
       const context = getSoundContext();
       if (!context) return Promise.resolve(null);
       if (soundBuffers[src]) return Promise.resolve(soundBuffers[src]);
       if (soundBufferPromises[src]) return soundBufferPromises[src];
 
-      soundBufferPromises[src] = fetch(src)
-        .then(response => response.arrayBuffer())
+      soundBufferPromises[src] = fetchSoundFile(src)
         .then(buffer => context.decodeAudioData(buffer))
         .then(buffer => {
           soundBuffers[src] = buffer;
           return buffer;
         })
-        .catch(() => null);
+        .catch(error => {
+          console.warn('Nie udało się wczytać dźwięku meczu:', error);
+          return null;
+        });
 
       return soundBufferPromises[src];
     }
@@ -6179,7 +6454,9 @@
 
       stopTimeout = setTimeout(stopAudio, clipSeconds * 1000);
       const playback = audio.play();
-      if (playback?.catch) playback.catch(() => {});
+      if (playback?.catch) {
+        playback.catch(error => console.warn(`Nie udało się odtworzyć ${src}:`, error));
+      }
     }
 
     async function playLimitedSound(src, clipSeconds = soundClipSeconds) {
@@ -6290,6 +6567,24 @@
       }
 
       if (isComplete(results[activeMatchIndex])) {
+        if (!results[activeMatchIndex].overallSnapshot) {
+          const attributeState = playerAttributeStateBeforeMatch(
+            currentTournamentMeta.id,
+            activeMatchIndex
+          );
+          const match = matches[activeMatchIndex];
+          const participantIds = [...new Set(
+            [...match[0], ...match[1]]
+              .map(name => tournamentPlayerId(currentTournamentMeta, name))
+              .filter(Boolean)
+          )];
+          results[activeMatchIndex].overallSnapshot = Object.fromEntries(
+            participantIds.map(playerId => [
+              playerId,
+              attributeState.byPlayer[playerId]?.overall ?? playerAttributeBaseScore
+            ])
+          );
+        }
         results[activeMatchIndex].completedAt = results[activeMatchIndex].completedAt || Date.now();
       } else {
         delete results[activeMatchIndex].completedAt;
