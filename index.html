@@ -3,8 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Turniej 2v2 — 5 graczy</title>
+  <title>Stamina Tactics — Turnieje</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap");
+
     @font-face {
       font-display: fallback;
       font-family: Audiowide;
@@ -113,6 +117,1277 @@
       min-height: 100dvh;
       background: var(--panel-3);
       overflow: hidden;
+    }
+
+    .shell.is-hidden,
+    .launcher.is-hidden,
+    .launcher-view.is-hidden {
+      display: none;
+    }
+
+    .launcher {
+      width: 100%;
+      min-height: 100dvh;
+      background: var(--panel-3);
+    }
+
+    .launcher-hero {
+      padding: max(20px, env(safe-area-inset-top)) 12px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .launcher-hero .brand-logo {
+      padding-top: 4px;
+    }
+
+    .launcher-kicker {
+      margin-top: 26px;
+      color: var(--accent);
+      font-size: 9px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .launcher-title {
+      margin: 5px 0 0;
+      font-size: 25px;
+      line-height: 29px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .launcher-copy {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 16px;
+    }
+
+    .launcher-primary {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .launcher-secondary {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .launcher-content {
+      padding: 14px 8px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .launcher-section + .launcher-section {
+      margin-top: 22px;
+    }
+
+    .launcher-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 8px;
+    }
+
+    .launcher-section-head h2 {
+      margin: 0;
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .launcher-count {
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .tournament-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .tournament-entry,
+    .archive-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 38px;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .tournament-delete {
+      width: 38px;
+      min-height: 38px;
+      border: 1px solid rgba(255, 74, 119, .25);
+      border-radius: 6px;
+      background: rgba(255, 41, 91, .08);
+      color: #ff7699;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .tournament-delete:active {
+      background: rgba(255, 41, 91, .2);
+    }
+
+    .tournament-delete:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 1px;
+    }
+
+    .tournament-card {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .tournament-card-top,
+    .tournament-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .tournament-card-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tournament-card-format {
+      flex: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: #ff6c95;
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .tournament-card-meta {
+      margin: 6px 0 10px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 12px;
+    }
+
+    .tournament-progress {
+      height: 3px;
+      overflow: hidden;
+      border-radius: 9px;
+      background: var(--panel-2);
+    }
+
+    .tournament-progress span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .tournament-card-bottom {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .archive-table-head,
+    .archive-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(58px, .62fr) minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .archive-table-head {
+      min-height: 36px;
+      padding: 0 10px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .archive-list {
+      gap: 0;
+    }
+
+    .archive-row {
+      width: 100%;
+      min-height: 58px;
+      padding: 10px;
+      border: 0;
+      background: var(--panel-3);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .archive-entry:nth-child(even) .archive-row {
+      background: rgba(15, 45, 55, .34);
+    }
+
+    .archive-entry .tournament-delete {
+      border-radius: 0;
+    }
+
+    .archive-row:active {
+      background: var(--panel-2);
+    }
+
+    .archive-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 11px;
+      line-height: 15px;
+      font-weight: 700;
+    }
+
+    .archive-format {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .archive-winner {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+    }
+
+    .archive-winner-color {
+      width: 13px;
+      height: 13px;
+      flex: none;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 3px;
+    }
+
+    .archive-winner-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .launcher-empty {
+      padding: 20px 12px;
+      border: 1px dashed var(--line);
+      border-radius: 6px;
+      color: var(--muted-2);
+      font-size: 10px;
+      line-height: 15px;
+      text-align: center;
+    }
+
+    .launcher-back {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .launcher-form-head {
+      display: grid;
+      grid-template-columns: 32px 1fr 32px;
+      align-items: center;
+      gap: 8px;
+      padding: max(12px, env(safe-area-inset-top)) 8px 10px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .launcher-form-head h2 {
+      margin: 0;
+      font-size: 12px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .launcher-form {
+      padding: 14px 8px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .launcher-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .launcher-field > span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .launcher-input {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .launcher-input:focus {
+      border-color: var(--accent);
+    }
+
+    .format-description {
+      min-height: 30px;
+      padding: 1px 2px 0;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 14px;
+    }
+
+    .new-return-row {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+    }
+
+    .new-return-row strong,
+    .new-return-row small {
+      display: block;
+    }
+
+    .new-return-row strong {
+      font-size: 11px;
+      line-height: 14px;
+    }
+
+    .new-return-row small {
+      margin-top: 3px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 12px;
+    }
+
+    .new-return-row.is-disabled {
+      opacity: .46;
+    }
+
+    .format-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .format-option {
+      position: relative;
+    }
+
+    .format-option input {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .format-option-card {
+      display: block;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      cursor: pointer;
+    }
+
+    .format-option-card strong,
+    .format-option-card small {
+      display: block;
+    }
+
+    .format-option-card strong {
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .format-option-card small {
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 13px;
+    }
+
+    .format-option input:checked + .format-option-card {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .new-player-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .player-selection-count {
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 12px;
+    }
+
+    .player-pick-card {
+      width: 100%;
+      min-height: 48px;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 20px;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .player-pick-card.is-selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .player-pick-check {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: transparent;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .player-pick-card.is-selected .player-pick-check {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .launcher-add {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .players-panel,
+    .player-detail {
+      padding: 14px 8px max(20px, env(safe-area-inset-bottom));
+    }
+
+    .players-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 8px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .elo-ranking-link {
+      width: 100%;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .elo-ranking-link span:last-child {
+      color: var(--muted-2);
+      font-size: 18px;
+    }
+
+    .elo-ranking-panel {
+      padding: 14px 8px max(20px, env(safe-area-inset-bottom));
+    }
+
+    .elo-ranking-head {
+      min-height: 32px;
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) 52px;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      color: var(--muted-2);
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .elo-ranking-head span:last-child { text-align: right; }
+    .elo-ranking-list { overflow: hidden; border-radius: 7px; }
+
+    .elo-ranking-row {
+      width: 100%;
+      min-height: 60px;
+      display: grid;
+      grid-template-columns: 26px 38px minmax(0, 1fr) 52px;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .elo-ranking-row:last-child { border-bottom: 0; }
+    .elo-ranking-row:active { background: var(--panel-2); }
+    .elo-ranking-position { color: var(--muted); font-family: "Roboto Mono", monospace; font-size: 10px; }
+    .elo-ranking-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; }
+    .elo-ranking-value { font-family: "Roboto Mono", monospace; font-size: 13px; font-weight: 900; text-align: right; }
+
+    .player-card-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .player-card {
+      width: 100%;
+      min-height: 66px;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--bg);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .player-card:nth-child(even) { background: rgba(15, 45, 55, .34); }
+
+    .player-avatar,
+    .player-detail-avatar {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text);
+      font-weight: 900;
+      isolation: isolate;
+      text-transform: uppercase;
+    }
+
+    .avatar-photo-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: visible;
+      pointer-events: none;
+      -webkit-clip-path: var(--avatar-photo-clip, polygon(-200% -200%, 200% -200%, 200% 50%, 97% 50%, 95.4% 62.2%, 90.7% 73.5%, 83.2% 83.2%, 73.5% 90.7%, 62.2% 95.4%, 50% 97%, 37.8% 95.4%, 26.5% 90.7%, 16.8% 83.2%, 9.3% 73.5%, 4.6% 62.2%, 3% 50%, -200% 50%));
+      clip-path: var(--avatar-photo-clip, polygon(-200% -200%, 200% -200%, 200% 50%, 97% 50%, 95.4% 62.2%, 90.7% 73.5%, 83.2% 83.2%, 73.5% 90.7%, 62.2% 95.4%, 50% 97%, 37.8% 95.4%, 26.5% 90.7%, 16.8% 83.2%, 9.3% 73.5%, 4.6% 62.2%, 3% 50%, -200% 50%));
+    }
+
+    .avatar-photo-layer img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      transform: scale(var(--avatar-photo-scale, 1.27));
+      transform-origin: center bottom;
+    }
+
+    .player-photo-preview img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .tier-avatar::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: -1;
+      width: var(--avatar-circle-size, 94%);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border: 1px solid var(--avatar-border, rgba(255, 255, 255, .2));
+      border-radius: 50%;
+      background: var(--avatar-background, linear-gradient(145deg, #173946, #0a2029));
+    }
+
+    .tier-avatar.is-common {
+      --avatar-border: #b8bec1;
+      --avatar-background: #858b8e;
+      border-color: transparent;
+      background: transparent;
+      color: #171c1f;
+    }
+
+    .tier-avatar.is-bronze {
+      --avatar-border: #dc9f6b;
+      --avatar-background: linear-gradient(145deg, #d39a69, #8d5739 58%, #673923);
+      border-color: transparent;
+      background: transparent;
+      color: #28160d;
+    }
+
+    .tier-avatar.is-silver {
+      --avatar-border: #fff;
+      --avatar-background: linear-gradient(145deg, #fbfcfc, #dce2e4 58%, #98a3a8);
+      border-color: transparent;
+      background: transparent;
+      color: #152025;
+    }
+
+    .tier-avatar.is-gold {
+      --avatar-border: #f5dc79;
+      --avatar-background: linear-gradient(145deg, #f5dc79, #d9ae43 58%, #a8731f);
+      border-color: transparent;
+      background: transparent;
+      color: #2c220e;
+    }
+
+    .player-avatar { width: 38px; height: 38px; font-size: 13px; }
+
+    .avatar-tuning-panel {
+      position: fixed;
+      top: 50%;
+      right: 8px;
+      z-index: 1000;
+      width: 154px;
+      display: grid;
+      gap: 13px;
+      padding: 12px;
+      transform: translateY(-50%);
+      border: 1px solid #24505d;
+      border-radius: 8px;
+      background: rgba(1, 10, 15, .96);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .42);
+    }
+
+    .avatar-tuning-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .avatar-tuning-control {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 8px;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .avatar-tuning-control output {
+      color: var(--text);
+      font-family: "Roboto Mono", monospace;
+      font-size: 8px;
+    }
+
+    .avatar-tuning-control input[type="range"] {
+      width: 100%;
+      height: 16px;
+      grid-column: 1 / -1;
+      margin: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    @media (min-width: 780px) {
+      .avatar-tuning-panel {
+        right: max(12px, calc((100vw - 430px) / 2 - 174px));
+      }
+    }
+
+    .player-card-name {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      line-height: 15px;
+      font-weight: 800;
+    }
+
+    .player-card-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 12px;
+    }
+
+    .player-card-real-name {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-card-arrow { color: var(--muted-2); font-size: 20px; }
+
+    .player-profile-head {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .player-detail-avatar { width: 58px; height: 58px; flex: none; font-size: 18px; }
+    .player-profile-info { min-width: 0; flex: 1; }
+    .player-profile-head h3 { margin: 0; font-size: 18px; line-height: 22px; }
+    .player-profile-head p { margin: 4px 0 0; color: var(--muted-2); font-size: 9px; text-transform: uppercase; }
+
+    .player-profile-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .player-profile-action {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .player-profile-action.is-danger { color: #ff7699; }
+
+    .player-delete-note {
+      margin: 8px 3px 0;
+      color: var(--muted-2);
+      font-size: 8px;
+      line-height: 12px;
+    }
+
+    .fifa-attribute-card {
+      --card-text: #2c220e;
+      --card-glow: rgba(255, 245, 166, .88);
+      --card-streak-dark: rgba(141, 92, 13, .32);
+      --card-streak-light: rgba(255, 239, 146, .46);
+      --card-start: #d9ae43;
+      --card-light: #f5dc79;
+      --card-middle: #c7932d;
+      --card-highlight: #f4d66d;
+      --card-end: #a8731f;
+      --card-dot: rgba(117, 76, 12, .24);
+      --card-dot-soft: rgba(117, 76, 12, .2);
+      --card-line: rgba(81, 52, 6, .48);
+      --card-silhouette: rgba(91, 59, 10, .32);
+      --card-silhouette-body: rgba(91, 59, 10, .3);
+      position: relative;
+      width: min(238.12px, 76vw);
+      aspect-ratio: 238.12 / 344;
+      height: auto;
+      margin: 18px auto 6px;
+      overflow: hidden;
+      clip-path: none;
+      -webkit-clip-path: url(#player-card-shape);
+      clip-path: url(#player-card-shape);
+      background:
+        radial-gradient(circle at 48% 38%, var(--card-glow) 0 17%, transparent 44%),
+        linear-gradient(132deg, transparent 0 36%, var(--card-streak-dark) 36.5% 38%, var(--card-streak-light) 38.5% 41%, transparent 41.5% 100%),
+        linear-gradient(145deg, var(--card-start) 0%, var(--card-light) 24%, var(--card-middle) 49%, var(--card-highlight) 72%, var(--card-end) 100%);
+      color: var(--card-text);
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-weight: 350;
+      filter: drop-shadow(0 13px 16px rgba(0, 0, 0, .32));
+      isolation: isolate;
+    }
+
+    .fifa-card-frame {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .fifa-card-frame use {
+      fill: none;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .fifa-card-frame-bevel-shadow {
+      stroke: rgba(0, 0, 0, .52);
+      stroke-width: 3px;
+    }
+
+    .fifa-card-frame-bevel-highlight {
+      stroke: rgba(255, 255, 255, .24);
+      stroke-width: 1.5px;
+    }
+
+    .fifa-card-frame-stroke {
+      stroke: var(--card-line);
+      stroke-width: 2px;
+    }
+
+    .fifa-attribute-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: .48;
+      background:
+        radial-gradient(circle at 21% 31%, var(--card-dot) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 76% 22%, var(--card-dot-soft) 0 2px, transparent 2.5px),
+        linear-gradient(159deg, transparent 0 46%, var(--card-streak-dark) 46.5% 49%, transparent 49.5% 100%);
+      background-size: 49px 47px, 61px 59px, auto;
+    }
+
+    .fifa-attribute-card.is-common {
+      --card-text: #f0f3f4;
+      --card-line: rgba(232, 238, 240, .36);
+      --card-silhouette: rgba(0, 0, 0, .3);
+      --card-silhouette-body: rgba(0, 0, 0, .26);
+      background: linear-gradient(145deg, #41484c 0%, #30373a 52%, #202629 100%);
+    }
+
+    .fifa-attribute-card.is-common::before { display: none; }
+    .fifa-attribute-card.is-common .fifa-card-portrait { color: rgba(240, 243, 244, .72); }
+
+    .fifa-attribute-card.is-bronze {
+      --card-text: #28160d;
+      --card-glow: rgba(250, 190, 132, .62);
+      --card-streak-dark: rgba(85, 43, 20, .32);
+      --card-streak-light: rgba(255, 205, 158, .38);
+      --card-start: #8d5739;
+      --card-light: #d39a69;
+      --card-middle: #a9653f;
+      --card-highlight: #dc9f6b;
+      --card-end: #673923;
+      --card-dot: rgba(74, 35, 17, .24);
+      --card-dot-soft: rgba(74, 35, 17, .18);
+      --card-line: rgba(67, 31, 14, .46);
+      --card-silhouette: rgba(74, 35, 17, .3);
+      --card-silhouette-body: rgba(74, 35, 17, .27);
+    }
+
+    .fifa-attribute-card.is-silver {
+      --card-text: #152025;
+      --card-glow: rgba(255, 255, 255, .94);
+      --card-streak-dark: rgba(105, 119, 125, .24);
+      --card-streak-light: rgba(255, 255, 255, .72);
+      --card-start: #b8c0c4;
+      --card-light: #fbfcfc;
+      --card-middle: #dce2e4;
+      --card-highlight: #ffffff;
+      --card-end: #98a3a8;
+      --card-dot: rgba(75, 91, 98, .17);
+      --card-dot-soft: rgba(75, 91, 98, .12);
+      --card-line: rgba(43, 56, 62, .42);
+      --card-silhouette: rgba(52, 67, 74, .2);
+      --card-silhouette-body: rgba(52, 67, 74, .17);
+    }
+
+    .fifa-card-rating {
+      position: absolute;
+      top: 47px;
+      left: 36.93px;
+      z-index: 2;
+      width: 55px;
+      display: grid;
+      justify-items: center;
+      line-height: 1;
+    }
+
+    .fifa-card-rating strong {
+      font-family: inherit;
+      font-size: 54.24px;
+      line-height: 54px;
+      font-weight: 350;
+      letter-spacing: -1.5px;
+    }
+
+    .fifa-card-rating span {
+      margin-top: -1px;
+      font-size: 18.4px;
+      line-height: 20px;
+      font-weight: 350;
+      letter-spacing: 0;
+    }
+
+    .fifa-card-portrait {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      left: 2px;
+      width: auto;
+      height: 245px;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: visible;
+      color: rgba(73, 49, 10, .7);
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-size: 55px;
+      font-weight: 350;
+      text-transform: uppercase;
+      background:
+        radial-gradient(ellipse at 50% 30%, var(--card-silhouette) 0 20%, transparent 21%),
+        radial-gradient(ellipse at 50% 112%, var(--card-silhouette-body) 0 53%, transparent 54%);
+    }
+
+    .fifa-card-portrait img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      object-position: 100% bottom;
+      transform: translate(15%, -2%) scale(1.04);
+      transform-origin: center bottom;
+      filter: saturate(.82) contrast(1.04);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0 52%, rgba(0, 0, 0, .94) 60.5%, rgba(0, 0, 0, .68) 70.36%, rgba(0, 0, 0, .3) 78.86%, transparent 86%);
+      mask-image: linear-gradient(to bottom, #000 0 52%, rgba(0, 0, 0, .94) 60.5%, rgba(0, 0, 0, .68) 70.36%, rgba(0, 0, 0, .3) 78.86%, transparent 86%);
+    }
+
+    .fifa-card-portrait.has-photo { background: transparent; }
+
+    .fifa-card-name {
+      position: absolute;
+      top: 192px;
+      left: 35.04px;
+      right: 35.04px;
+      height: 34.17px;
+      z-index: 3;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+      padding: 0 4px 5px;
+      border-bottom: 1px solid var(--card-line);
+      font-size: 20.87px;
+      line-height: 25px;
+      font-weight: 350;
+      text-align: center;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .fifa-card-stats {
+      position: absolute;
+      top: 234.93px;
+      left: 35.04px;
+      right: 35.04px;
+      height: 59.19px;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      text-align: center;
+    }
+
+    .fifa-card-stat {
+      display: grid;
+      grid-template-rows: 38px 21px;
+      align-content: start;
+      justify-items: center;
+      min-height: 59.19px;
+    }
+
+    .fifa-card-stat + .fifa-card-stat { border-left: 1px solid var(--card-line); }
+    .fifa-card-stat strong { font-family: inherit; font-size: 36.69px; line-height: 38px; font-weight: 350; }
+    .fifa-card-stat span { font-size: 18.4px; line-height: 21px; font-weight: 350; }
+
+    .player-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .player-stat-card {
+      min-height: 66px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      background: var(--panel-2);
+    }
+
+    .player-stat-card strong { font-family: "Roboto Mono", monospace; font-size: 20px; line-height: 24px; }
+    .player-stat-card span { color: var(--muted); font-size: 8px; line-height: 11px; font-weight: 800; text-transform: uppercase; }
+
+    .player-detail-section-title {
+      margin: 20px 4px 8px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .recent-match-list { display: grid; gap: 1px; overflow: hidden; border-radius: 7px; }
+
+    .recent-match-more {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 10px;
+      line-height: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .recent-match-more:active { background: #163b47; }
+    .recent-match-more:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    .recent-match {
+      width: 100%;
+      min-height: 64px;
+      display: grid;
+      grid-template-columns: 53px minmax(0, 1fr) 18px 42px;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 9px;
+      border: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .recent-match:last-child { border-bottom: 0; }
+    .recent-match:active { background: var(--panel-2); }
+    .recent-match:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+    .recent-match > .result-badge { justify-self: end; }
+
+    .result-badge {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .result-badge.W { background: var(--green); }
+    .result-badge.D { background: var(--draw); }
+    .result-badge.L { background: var(--red); }
+
+    .recent-match-date {
+      color: var(--muted);
+      font-family: "Roboto Mono", monospace;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .recent-match-teams,
+    .recent-match-scores { display: grid; gap: 5px; min-width: 0; }
+
+    .recent-match-team {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 13px;
+    }
+
+    .recent-match-team.is-player-team { color: var(--text); font-weight: 900; }
+
+    .recent-match-score {
+      font-family: "Roboto Mono", monospace;
+      font-size: 11px;
+      line-height: 13px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .player-photo-field {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .player-photo-preview {
+      width: 72px;
+      height: 72px;
+      flex: none;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #173946, #0a2029);
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .player-photo-actions { min-width: 0; display: grid; justify-items: start; gap: 5px; }
+    .player-photo-actions strong { font-size: 11px; }
+    .player-photo-actions small { color: var(--muted-2); font-size: 8px; line-height: 11px; }
+
+    .player-photo-upload,
+    .player-photo-remove {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 8px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .player-photo-remove { color: #ff7699; }
+    .player-photo-remove.is-hidden { display: none; }
+    .required-mark { color: #ff7699; }
+
+    .launcher-error {
+      min-height: 15px;
+      margin-top: 9px;
+      color: #ff6c95;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .home-trigger {
+      position: absolute;
+      top: max(14px, env(safe-area-inset-top));
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .format-setting.is-hidden {
+      display: none;
+    }
+
+    #finish-tournament.is-hidden,
+    #restore-tournament.is-hidden,
+    #generate-next-series.is-hidden {
+      display: none;
     }
 
     .topbar {
@@ -405,23 +1680,11 @@
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .28);
     }
 
-    .profile-name-input {
-      width: 100%;
-      height: 34px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--panel-3);
+    .profile-player-name {
       color: var(--text);
-      outline: none;
-      padding: 0 9px;
-      font-size: 13px;
-      line-height: 16px;
-      font-weight: 700;
-    }
-
-    .profile-name-input:focus {
-      border-color: var(--focus);
-      box-shadow: 0 0 0 2px var(--accent-soft);
+      font-size: 12px;
+      line-height: 15px;
+      font-weight: 800;
     }
 
     .profile-colors {
@@ -613,17 +1876,26 @@
     .match-team-row {
       min-width: 0;
       display: grid;
-      grid-template-columns: 36px 18px minmax(0, 1fr) 24px;
+      grid-template-columns: 18px minmax(0, 1fr) 24px;
       align-items: center;
       gap: 7px;
     }
 
     .team-side {
+      display: none;
       color: var(--muted-2);
       font-size: 8px;
       line-height: 10px;
       font-weight: 800;
       text-transform: uppercase;
+    }
+
+    .shell.is-five-format .match-team-row {
+      grid-template-columns: 36px 18px minmax(0, 1fr) 24px;
+    }
+
+    .shell.is-five-format .team-side {
+      display: inline;
     }
 
     .match-team-row.is-winner .team-players {
@@ -642,11 +1914,11 @@
     }
 
     .team-flag.vertical {
-      grid-template-columns: repeat(var(--flag-parts, 2), 1fr);
+      grid-template-columns: repeat(var(--flag-parts, 3), 1fr);
     }
 
     .team-flag.horizontal {
-      grid-template-rows: repeat(var(--flag-parts, 2), 1fr);
+      grid-template-rows: repeat(var(--flag-parts, 3), 1fr);
     }
 
     .team-flag span {
@@ -725,6 +1997,12 @@
       text-transform: uppercase;
     }
 
+    .clear:disabled {
+      color: var(--muted-2);
+      cursor: default;
+      opacity: .62;
+    }
+
     .table-wrap {
       overflow-x: hidden;
       padding: 8px;
@@ -782,6 +2060,24 @@
       gap: 5px;
       max-width: 100%;
       font-weight: 700;
+    }
+
+    .standings-player-link {
+      max-width: 100%;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .standings-player-link:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
     }
 
     .name span:last-child {
@@ -979,6 +2275,16 @@
       opacity: 1;
     }
 
+    .detail-screen.is-readonly-tournament .detail-score-input,
+    .detail-screen.is-readonly-tournament .detail-score-input:disabled {
+      border-color: transparent;
+      background: transparent;
+      color: var(--text);
+      box-shadow: none;
+      opacity: 1;
+      cursor: default;
+    }
+
     .detail-score-input:focus {
       border-color: var(--focus);
       box-shadow: 0 0 0 2px var(--accent-soft);
@@ -1034,6 +2340,162 @@
       line-height: 10px;
       font-weight: 900;
       font-family: Arial, sans-serif;
+    }
+
+    .match-lineups {
+      margin-top: 8px;
+      overflow: hidden;
+      background: var(--panel-3);
+    }
+
+    .match-lineups-title {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      background: linear-gradient(180deg, #00313b 0%, #002833 100%);
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .match-lineups-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0;
+      padding: 6px 0 8px;
+      background: var(--bg);
+    }
+
+    .match-lineup-team {
+      min-width: 0;
+      background: var(--bg);
+    }
+
+    .match-lineup-list { display: grid; gap: 4px; }
+
+    .match-lineup-player {
+      width: 100%;
+      min-width: 0;
+      min-height: 54px;
+      display: grid;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .match-lineup-player:active { background: rgba(15, 45, 55, .34); }
+    .match-lineup-player:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+    .match-lineup-team.is-home .match-lineup-player {
+      grid-template-columns: auto 34px minmax(0, 1fr);
+      justify-items: start;
+    }
+
+    .match-lineup-team.is-away .match-lineup-player {
+      grid-template-columns: minmax(0, 1fr) 34px auto;
+      justify-items: end;
+    }
+
+    .match-lineup-avatar {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      border: 0;
+      border-radius: 50%;
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 900;
+      isolation: isolate;
+      text-transform: uppercase;
+    }
+
+    .match-lineup-top-form {
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      z-index: 5;
+      width: 17px;
+      height: 17px;
+      display: block;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8));
+    }
+
+    .match-lineup-top-form svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    .match-lineup-top-form-star {
+      fill: #ffd83d;
+      stroke: #fff5a6;
+      stroke-width: 1.2;
+      stroke-linejoin: round;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: match-top-form-star 1.5s ease-in-out infinite;
+    }
+
+    .match-lineup-top-form-glint {
+      fill: #fff;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: match-top-form-glint 1.5s ease-in-out infinite;
+    }
+
+    @keyframes match-top-form-star {
+      0%, 100% { transform: scale(.9) rotate(-5deg); }
+      45% { transform: scale(1.08) rotate(4deg); }
+      62% { transform: scale(1) rotate(0); }
+    }
+
+    @keyframes match-top-form-glint {
+      0%, 25%, 100% { opacity: 0; transform: scale(.25); }
+      45%, 58% { opacity: 1; transform: scale(1); }
+      72% { opacity: 0; transform: scale(.4); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .match-lineup-top-form-star,
+      .match-lineup-top-form-glint { animation: none; }
+      .match-lineup-top-form-glint { opacity: 1; }
+    }
+
+    .match-lineup-name {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .match-lineup-team.is-away .match-lineup-name { text-align: right; }
+
+    .match-lineup-overall {
+      color: var(--text);
+      font-family: Audiowide, FS Numbers, LivesportFinderLatin, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 20px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 400;
+      white-space: nowrap;
     }
 
     .prediction-panel {
@@ -1338,12 +2800,8 @@
       }
 
       .match-team-row {
-        grid-template-columns: 32px 18px minmax(0, 1fr) 20px;
+        grid-template-columns: 18px minmax(0, 1fr) 20px;
         gap: 5px;
-      }
-
-      .team-side {
-        font-size: 7px;
       }
 
       .match-meta {
@@ -1396,14 +2854,187 @@
   </style>
 </head>
 <body>
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute; overflow:hidden">
+    <defs>
+      <clipPath id="player-card-shape" clipPathUnits="objectBoundingBox">
+        <path
+          transform="scale(0.0041995632454 0.0029069767442)"
+          d="M238.12,34.86v246.74s-119.06,32.77-119.06,62.4c0-14.82-29.76-30.29-59.53-42.06-29.77-11.77-59.53-19.84-59.53-19.84V35.36C77.81,35.36,51.87,0,119.06,0c33.6,0,43.91,8.72,55.55,17.43,11.64,8.71,24.61,17.43,63.51,17.43Z"
+        />
+      </clipPath>
+      <path
+        id="player-card-outline"
+        d="M238.12,34.86v246.74s-119.06,32.77-119.06,62.4c0-14.82-29.76-30.29-59.53-42.06-29.77-11.77-59.53-19.84-59.53-19.84V35.36C77.81,35.36,51.87,0,119.06,0c33.6,0,43.91,8.72,55.55,17.43,11.64,8.71,24.61,17.43,63.51,17.43Z"
+      />
+    </defs>
+  </svg>
+  <aside class="avatar-tuning-panel" aria-label="Panel ustawień miniaturek">
+    <h2 class="avatar-tuning-title">Miniaturki zawodników</h2>
+    <label class="avatar-tuning-control">
+      <span>Photo scale</span><output data-avatar-output="photoScale">127%</output>
+      <input type="range" data-avatar-control="photoScale" min="50" max="220" step="1" value="127">
+    </label>
+    <label class="avatar-tuning-control">
+      <span>Circle size</span><output data-avatar-output="circleSize">94%</output>
+      <input type="range" data-avatar-control="circleSize" min="30" max="100" step="1" value="94">
+    </label>
+  </aside>
   <main class="app">
-    <section class="shell">
+    <section class="launcher" id="launcher">
+      <section class="launcher-view" id="launcher-home">
+        <header class="launcher-hero">
+          <div class="brand-logo">STAMINA<span>TACTICS</span></div>
+          <div class="launcher-kicker">Panel główny</div>
+          <h1 class="launcher-title">Turnieje</h1>
+          <p class="launcher-copy">Wybierz trwający turniej, wróć do archiwum albo rozpocznij nowe rozgrywki.</p>
+          <button class="launcher-primary" type="button" id="create-tournament-open">Stwórz nowy turniej</button>
+          <button class="launcher-secondary" type="button" id="players-open">Zawodnicy</button>
+        </header>
+        <div class="launcher-content">
+          <section class="launcher-section">
+            <div class="launcher-section-head"><h2>W toku</h2><span class="launcher-count" id="active-tournament-count">0</span></div>
+            <div class="tournament-list" id="active-tournament-list"></div>
+          </section>
+          <section class="launcher-section">
+            <div class="launcher-section-head"><h2>Archiwum</h2><span class="launcher-count" id="archive-tournament-count">0</span></div>
+            <div class="archive-table-head" aria-hidden="true">
+              <span>Nazwa turnieju</span>
+              <span>Format</span>
+              <span>Zwycięzca</span>
+            </div>
+            <div class="tournament-list archive-list" id="archive-tournament-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="launcher-view is-hidden" id="launcher-create">
+        <header class="launcher-form-head">
+          <button class="launcher-back" type="button" id="create-tournament-back" aria-label="Wróć">‹</button>
+          <h2>Nowy turniej</h2>
+          <span></span>
+        </header>
+        <form class="launcher-form" id="create-tournament-form">
+          <label class="launcher-field">
+            <span>Nazwa turnieju</span>
+            <input class="launcher-input" id="new-tournament-name" maxlength="40" autocomplete="off">
+          </label>
+          <div class="launcher-field">
+            <span>Format</span>
+            <select class="launcher-input" id="new-tournament-format">
+              <option value="4">4 graczy</option>
+              <option value="5">5 graczy</option>
+              <option value="6" selected>6 graczy</option>
+              <option value="7">7 graczy</option>
+            </select>
+            <small class="format-description" id="new-format-description"></small>
+          </div>
+          <label class="new-return-row" id="new-return-row">
+            <span>
+              <strong>Rewanże</strong>
+              <small>Dodaj drugie mecze z zamienionymi stronami</small>
+            </span>
+            <span class="toggle">
+              <input id="new-tournament-double-legs" type="checkbox" checked>
+              <span></span>
+            </span>
+          </label>
+          <div class="launcher-field">
+            <span>Piłkarze</span>
+            <small class="player-selection-count" id="player-selection-count"></small>
+            <div class="new-player-list" id="new-player-list"></div>
+          </div>
+          <button class="launcher-primary" type="submit">Utwórz i otwórz turniej</button>
+          <div class="launcher-error" id="create-tournament-error" role="alert"></div>
+        </form>
+      </section>
+
+      <section class="launcher-view is-hidden" id="launcher-players">
+        <header class="launcher-form-head">
+          <button class="launcher-back" type="button" id="players-back" aria-label="Wróć">‹</button>
+          <h2>Zawodnicy</h2>
+          <button class="launcher-add" type="button" id="new-player-open" aria-label="Dodaj zawodnika">+</button>
+        </header>
+        <div class="players-panel">
+          <div class="players-panel-head">
+            <span>Wszyscy zawodnicy</span>
+            <span id="players-count">0</span>
+          </div>
+          <button class="elo-ranking-link" type="button" id="elo-ranking-open">
+            <span>Ranking Elo</span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <div class="player-card-list" id="player-card-list"></div>
+        </div>
+      </section>
+
+      <section class="launcher-view is-hidden" id="launcher-elo-ranking">
+        <header class="launcher-form-head">
+          <button class="launcher-back" type="button" id="elo-ranking-back" aria-label="Wróć">‹</button>
+          <h2>Ranking Elo</h2>
+          <span></span>
+        </header>
+        <div class="elo-ranking-panel">
+          <div class="elo-ranking-head" aria-hidden="true">
+            <span>#</span>
+            <span>Zawodnik</span>
+            <span>Elo</span>
+          </div>
+          <div class="elo-ranking-list" id="elo-ranking-list"></div>
+        </div>
+      </section>
+
+      <section class="launcher-view is-hidden" id="launcher-player-detail">
+        <header class="launcher-form-head">
+          <button class="launcher-back" type="button" id="player-detail-back" aria-label="Wróć">‹</button>
+          <h2>Profil zawodnika</h2>
+          <span></span>
+        </header>
+        <div class="player-detail" id="player-detail"></div>
+      </section>
+
+      <section class="launcher-view is-hidden" id="launcher-new-player">
+        <header class="launcher-form-head">
+          <button class="launcher-back" type="button" id="new-player-back" aria-label="Wróć">‹</button>
+          <h2 id="player-form-title">Nowy zawodnik</h2>
+          <span></span>
+        </header>
+        <form class="launcher-form" id="new-player-form">
+          <div class="player-photo-field">
+            <div class="player-photo-preview" id="player-photo-preview" aria-label="Podgląd zdjęcia"></div>
+            <div class="player-photo-actions">
+              <strong>Zdjęcie zawodnika</strong>
+              <small>JPG, PNG lub WEBP • maksymalnie 12 MB</small>
+              <label class="player-photo-upload" for="new-player-photo">Wybierz zdjęcie</label>
+              <input id="new-player-photo" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+              <button class="player-photo-remove is-hidden" id="remove-player-photo" type="button">Usuń zdjęcie</button>
+            </div>
+          </div>
+          <label class="launcher-field">
+            <span>Imię</span>
+            <input class="launcher-input" id="new-player-first-name" maxlength="30" autocomplete="given-name">
+          </label>
+          <label class="launcher-field">
+            <span>Nazwisko</span>
+            <input class="launcher-input" id="new-player-last-name" maxlength="40" autocomplete="family-name">
+          </label>
+          <label class="launcher-field">
+            <span>Pseudonim <strong class="required-mark">*</strong></span>
+            <input class="launcher-input" id="new-player-nickname" maxlength="24" autocomplete="off" required placeholder="Najważniejsza nazwa zawodnika">
+          </label>
+          <button class="launcher-primary" id="player-form-submit" type="submit">Utwórz zawodnika</button>
+          <div class="launcher-error" id="new-player-error" role="alert"></div>
+        </form>
+      </section>
+    </section>
+
+    <section class="shell is-hidden" id="tournament-shell">
       <header class="topbar">
         <button class="settings-trigger" type="button" id="settings-open" aria-label="Ustawienia">⚙</button>
+        <button class="home-trigger" type="button" id="tournaments-home" aria-label="Turnieje">⌂</button>
         <div class="brand-logo">STAMINA<span>TACTICS</span></div>
         <div class="title-row">
-          <h1>Turniej 2v2 • 5 graczy</h1>
-          <div class="total" id="progress">0/15 wyników</div>
+          <h1 id="tournament-title">Turniej 3v3</h1>
+          <div class="total" id="progress">0/20 wyników</div>
         </div>
         <nav class="tabs" aria-label="Widoki">
           <button class="tab is-active" type="button" data-tab="matches">Mecze</button>
@@ -1434,19 +3065,41 @@
                 </span>
                 <input class="setting-input" id="setting-countdown-seconds" type="number" min="0" max="60" step="1" inputmode="numeric">
               </label>
-              <div class="setting-row">
+              <label class="setting-row format-setting" id="player-count-setting">
+                <span>
+                  <span class="setting-label">Liczba piłkarzy</span>
+                  <span class="setting-hint">Zakres 4-7</span>
+                </span>
+                <select class="setting-input setting-select" id="setting-player-count">
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                </select>
+              </label>
+              <label class="setting-row toggle-row format-setting" id="double-legs-setting">
+                <span>
+                  <span class="setting-label">Rewanże</span>
+                  <span class="setting-hint">Drugie mecze z zamienionymi stronami</span>
+                </span>
+                <span class="toggle">
+                  <input id="setting-double-legs" type="checkbox">
+                  <span></span>
+                </span>
+              </label>
+              <div class="setting-row format-setting" id="format-summary-setting">
                 <span>
                   <span class="setting-label">Format turnieju</span>
                   <span class="setting-hint">Wszystkie możliwe składy</span>
                 </span>
-                <strong class="setting-label">15 meczów • 2v2 + pauza</strong>
+                <strong class="setting-label" id="format-summary-text"></strong>
               </div>
               <div class="setting-row">
                 <span>
-                  <span class="setting-label">Edytuj Piłkarzy</span>
-                  <span class="setting-hint">Nazwa i kolor profilu</span>
+                  <span class="setting-label">Kolory zawodników</span>
+                  <span class="setting-hint">Kolory obowiązują tylko w tym turnieju</span>
                 </span>
-                <button class="setting-action" type="button" id="edit-players">Edytuj</button>
+                <button class="setting-action" type="button" id="edit-players">Ustaw</button>
               </div>
             </form>
           </section>
@@ -1460,6 +3113,7 @@
       <section class="screen is-active" id="matches-screen">
         <div class="matches" id="matches"></div>
         <div class="actions">
+          <button class="primary-action is-hidden" type="button" id="generate-next-series">Ułóż kolejną serię meczów</button>
           <button class="clear" type="button" id="clear-results">Wyczyść wyniki</button>
         </div>
       </section>
@@ -1485,8 +3139,12 @@
           </table>
         </div>
         <div class="standings-footer">
-          <span id="schedule-summary">15 meczów • 6× gosp. / 6× gość • 3 min</span>
+          <span id="schedule-summary">20 meczów po 3 minuty</span>
           <span>&rarr;</span>
+        </div>
+        <div class="actions">
+          <button class="primary-action" type="button" id="finish-tournament">Zakończ turniej</button>
+          <button class="clear is-hidden" type="button" id="restore-tournament">Przywróć turniej</button>
         </div>
       </section>
 
@@ -1513,6 +3171,17 @@
           </div>
           <div class="first-leg-result" id="first-leg-result" aria-live="polite"></div>
         </div>
+        <section class="match-lineups" id="match-lineups" aria-labelledby="match-lineups-title">
+          <div class="match-lineups-title" id="match-lineups-title">Składy</div>
+          <div class="match-lineups-grid">
+            <div class="match-lineup-team is-home">
+              <div class="match-lineup-list" id="detail-lineup-team1"></div>
+            </div>
+            <div class="match-lineup-team is-away">
+              <div class="match-lineup-list" id="detail-lineup-team2"></div>
+            </div>
+          </div>
+        </section>
         <section class="prediction-panel" aria-label="Predykcja wyniku">
           <div class="prediction-odds-head">
             <span>Kursy</span>
@@ -1557,17 +3226,306 @@
   </main>
 
   <script>
-    const players = [
+    (async () => {
+    const staminaStoragePrefix = 'stamina-tactics-';
+    const staminaFirebaseRoot = 'stamina-tactics-data-v1';
+    const staminaRemoteOutboxKey = '__stamina-tactics-server-outbox-v1';
+    const firebaseConfig = {
+      apiKey: 'AIzaSyA7JqE7bNPU6FHqJSad5lKwjm-c8ozY9rg',
+      authDomain: 'bieganie-f4ada.firebaseapp.com',
+      databaseURL: 'https://bieganie-f4ada-default-rtdb.europe-west1.firebasedatabase.app',
+      projectId: 'bieganie-f4ada',
+      storageBucket: 'bieganie-f4ada.appspot.com',
+      messagingSenderId: '798631807038',
+      appId: '1:798631807038:web:fe21df42faead2b981696f'
+    };
+    const firebaseClientId = typeof window.crypto?.randomUUID === 'function'
+      ? window.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    let staminaFirebaseValuesRef = null;
+    let staminaFirebaseEnabled = false;
+    let staminaRemoteSyncReady = false;
+    let knownRemoteStorageKeys = new Set();
+    let remoteReloadTimer = null;
+
+    function isStaminaStorageKey(key) {
+      return typeof key === 'string'
+        && key.startsWith(staminaStoragePrefix)
+        && !/[.#$\[\]\/]/.test(key);
+    }
+
+    function staminaStorageEntries() {
+      const entries = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!isStaminaStorageKey(key)) continue;
+        const value = localStorage.getItem(key);
+        if (typeof value === 'string') entries.push([key, value]);
+      }
+      return entries;
+    }
+
+    function removeStaminaStorageEntries() {
+      const keys = staminaStorageEntries().map(([key]) => key);
+      keys.forEach(key => localStorage.removeItem(key));
+    }
+
+    function replaceLocalStaminaData(entries) {
+      const previousEntries = staminaStorageEntries();
+      try {
+        removeStaminaStorageEntries();
+        entries.forEach(([key, value]) => localStorage.setItem(key, value));
+      } catch (error) {
+        try {
+          removeStaminaStorageEntries();
+          previousEntries.forEach(([key, value]) => localStorage.setItem(key, value));
+        } catch {}
+        throw new Error('Nie udało się zapisać danych Stamina Tactics na tym urządzeniu.');
+      }
+    }
+
+    async function hydrateFromDataFile() {
+      const response = await fetch('./data.json', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Nie udało się pobrać data.json (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      if (
+        !payload
+        || payload.format !== 'stamina-tactics-local-storage-backup'
+        || payload.version !== 1
+        || !payload.data
+        || typeof payload.data !== 'object'
+        || Array.isArray(payload.data)
+      ) {
+        throw new Error('data.json nie jest prawidłowym plikiem danych Stamina Tactics.');
+      }
+
+      const entries = Object.entries(payload.data).filter(([key, value]) => (
+        isStaminaStorageKey(key) && typeof value === 'string'
+      ));
+      if (!entries.length) {
+        throw new Error('data.json nie zawiera danych Stamina Tactics.');
+      }
+      replaceLocalStaminaData(entries);
+      return entries;
+    }
+
+    function firebaseRecord(key, value) {
+      return {
+        key,
+        value,
+        clientId: firebaseClientId,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      };
+    }
+
+    function loadRemoteOutbox() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(staminaRemoteOutboxKey));
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveRemoteOutbox(outbox) {
+      if (Object.keys(outbox).length) {
+        localStorage.setItem(staminaRemoteOutboxKey, JSON.stringify(outbox));
+      } else {
+        localStorage.removeItem(staminaRemoteOutboxKey);
+      }
+    }
+
+    function applyRemoteOutboxLocally(outbox, pendingValues) {
+      Object.entries(outbox).forEach(([key, mutation]) => {
+        if (!isStaminaStorageKey(key)) return;
+        if (mutation?.removed) {
+          localStorage.removeItem(key);
+        } else if (typeof pendingValues[key] === 'string') {
+          localStorage.setItem(key, pendingValues[key]);
+        }
+      });
+    }
+
+    function clearRemoteMutation(key, mutationId) {
+      const outbox = loadRemoteOutbox();
+      if (outbox[key]?.id !== mutationId) return;
+      delete outbox[key];
+      saveRemoteOutbox(outbox);
+    }
+
+    function flushRemoteMutation(key, mutation) {
+      if (!staminaRemoteSyncReady || !staminaFirebaseValuesRef || !isStaminaStorageKey(key)) return;
+      const localValue = localStorage.getItem(key);
+      const operation = mutation.removed || typeof localValue !== 'string'
+        ? staminaFirebaseValuesRef.child(key).remove()
+        : staminaFirebaseValuesRef.child(key).set(firebaseRecord(key, localValue));
+      operation
+        .then(() => clearRemoteMutation(key, mutation.id))
+        .catch(error => console.error(`Nie udało się zsynchronizować ${key}:`, error));
+    }
+
+    function queueRemoteMutation(key, removed = false) {
+      if (!isStaminaStorageKey(key)) return;
+      const outbox = loadRemoteOutbox();
+      const mutation = {
+        id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+        removed
+      };
+      outbox[key] = mutation;
+      saveRemoteOutbox(outbox);
+      flushRemoteMutation(key, mutation);
+    }
+
+    function flushRemoteOutbox() {
+      Object.entries(loadRemoteOutbox()).forEach(([key, mutation]) => {
+        if (mutation && typeof mutation === 'object') flushRemoteMutation(key, mutation);
+      });
+    }
+
+    function entriesFromFirebaseSnapshot(snapshot) {
+      const entries = [];
+      snapshot.forEach(childSnapshot => {
+        const record = childSnapshot.val();
+        const key = typeof record?.key === 'string' ? record.key : childSnapshot.key;
+        const value = typeof record === 'string' ? record : record?.value;
+        if (isStaminaStorageKey(key) && typeof value === 'string') {
+          entries.push([key, value]);
+        }
+      });
+      return entries;
+    }
+
+    function seedRecords(entries) {
+      return Object.fromEntries(entries.map(([key, value]) => [key, firebaseRecord(key, value)]));
+    }
+
+    function scheduleReloadAfterRemoteChange() {
+      window.clearTimeout(remoteReloadTimer);
+      remoteReloadTimer = window.setTimeout(() => window.location.reload(), 180);
+    }
+
+    function applyRemoteChild(snapshot, removed = false) {
+      const record = snapshot.val();
+      const key = typeof record?.key === 'string' ? record.key : snapshot.key;
+      if (!isStaminaStorageKey(key)) return;
+      if (record?.clientId === firebaseClientId) return;
+      if (loadRemoteOutbox()[key]) return;
+      if (removed) {
+        if (localStorage.getItem(key) === null) return;
+        localStorage.removeItem(key);
+      } else {
+        const value = typeof record === 'string' ? record : record?.value;
+        if (typeof value !== 'string') return;
+        if (localStorage.getItem(key) === value) return;
+        localStorage.setItem(key, value);
+      }
+      scheduleReloadAfterRemoteChange();
+    }
+
+    function attachFirebaseListeners() {
+      staminaFirebaseValuesRef.on('child_added', snapshot => {
+        if (knownRemoteStorageKeys.has(snapshot.key)) return;
+        knownRemoteStorageKeys.add(snapshot.key);
+        applyRemoteChild(snapshot);
+      });
+      staminaFirebaseValuesRef.on('child_changed', snapshot => {
+        knownRemoteStorageKeys.add(snapshot.key);
+        applyRemoteChild(snapshot);
+      });
+      staminaFirebaseValuesRef.on('child_removed', snapshot => {
+        knownRemoteStorageKeys.delete(snapshot.key);
+        applyRemoteChild(snapshot, true);
+      });
+    }
+
+    async function initializeStaminaStorage() {
+      let fallbackWarning = '';
+      const pendingOutbox = loadRemoteOutbox();
+      const pendingOutboxValues = Object.fromEntries(
+        Object.keys(pendingOutbox).map(key => [key, localStorage.getItem(key)])
+      );
+      try {
+        if (!window.firebase?.database) throw new Error('Biblioteka Firebase nie została załadowana.');
+        const firebaseApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+        staminaFirebaseValuesRef = firebaseApp.database().ref(`${staminaFirebaseRoot}/values`);
+        let remoteSnapshot = await staminaFirebaseValuesRef.once('value');
+        let remoteEntries = entriesFromFirebaseSnapshot(remoteSnapshot);
+
+        if (!remoteEntries.length) {
+          let localEntries = staminaStorageEntries();
+          if (!localEntries.length) {
+            try {
+              localEntries = await hydrateFromDataFile();
+            } catch (error) {
+              console.warn(error.message || error);
+            }
+          }
+          if (localEntries.length) {
+            const transaction = await staminaFirebaseValuesRef.transaction(current => (
+              current && Object.keys(current).length ? undefined : seedRecords(localEntries)
+            ), undefined, false);
+            remoteSnapshot = transaction.snapshot;
+            remoteEntries = entriesFromFirebaseSnapshot(remoteSnapshot);
+          }
+        }
+
+        if (remoteEntries.length) replaceLocalStaminaData(remoteEntries);
+        applyRemoteOutboxLocally(pendingOutbox, pendingOutboxValues);
+        knownRemoteStorageKeys = new Set();
+        remoteSnapshot.forEach(childSnapshot => knownRemoteStorageKeys.add(childSnapshot.key));
+        staminaFirebaseEnabled = true;
+        staminaRemoteSyncReady = true;
+        attachFirebaseListeners();
+        flushRemoteOutbox();
+      } catch (error) {
+        console.error('Firebase Stamina Tactics:', error);
+        staminaFirebaseEnabled = false;
+        staminaRemoteSyncReady = false;
+        if (!staminaStorageEntries().length) {
+          try {
+            await hydrateFromDataFile();
+          } catch (dataFileError) {
+            console.error(dataFileError.message || dataFileError, dataFileError);
+          }
+        }
+        fallbackWarning = 'Brak połączenia z bazą danych. Zmiany są tymczasowo zapisywane tylko na tym urządzeniu.';
+      }
+      return fallbackWarning;
+    }
+
+    function setStaminaStorageItem(key, value) {
+      const stringValue = String(value);
+      localStorage.setItem(key, stringValue);
+      queueRemoteMutation(key);
+    }
+
+    function removeStaminaStorageItem(key) {
+      localStorage.removeItem(key);
+      queueRemoteMutation(key, true);
+    }
+
+    const storageLoadError = await initializeStaminaStorage();
+
+    const tournamentRegistryKey = 'stamina-tactics-universal-tournaments-v1';
+    const playerRegistryKey = 'stamina-tactics-universal-players-v1';
+    const basePlayers = [
       { name: 'Tymek', color: '#ed263d' },
       { name: 'Wałach', color: '#fbe247' },
       { name: 'Bartek', color: '#0085ff' },
       { name: 'Kamil', color: '#fdfdfd' },
-      { name: 'Soczek', color: '#00976a' }
+      { name: 'Soczek', color: '#00976a' },
+      { name: 'Kozon', color: '#020001' },
+      { name: 'Gracz 7', color: '#ff9100' }
     ];
 
-    const editablePlayers = [...players];
+    const players = basePlayers.slice(0, 6);
 
-    const editablePlayerMap = Object.fromEntries(editablePlayers.map(player => [player.name, player]));
+    const editablePlayers = [...basePlayers];
+
+    let editablePlayerMap = Object.fromEntries(editablePlayers.map(player => [player.name, player]));
 
     const profileColorPalette = [
       '#ed263d',
@@ -1581,29 +3539,73 @@
       '#020001'
     ];
 
-    const firstRoundMatches = buildAllPossibleMatches();
+    const classicFirstRoundMatches = [
+      [['Tymek', 'Wałach', 'Bartek'], ['Kamil', 'Soczek', 'Kozon']],
+      [['Tymek', 'Wałach', 'Kamil'], ['Bartek', 'Soczek', 'Kozon']],
+      [['Bartek', 'Kamil', 'Kozon'], ['Tymek', 'Wałach', 'Soczek']],
+      [['Bartek', 'Kamil', 'Soczek'], ['Tymek', 'Wałach', 'Kozon']],
+      [['Wałach', 'Soczek', 'Kozon'], ['Tymek', 'Bartek', 'Kamil']],
+      [['Tymek', 'Bartek', 'Soczek'], ['Wałach', 'Kamil', 'Kozon']],
+      [['Wałach', 'Kamil', 'Soczek'], ['Tymek', 'Bartek', 'Kozon']],
+      [['Wałach', 'Bartek', 'Kozon'], ['Tymek', 'Kamil', 'Soczek']],
+      [['Tymek', 'Kamil', 'Kozon'], ['Wałach', 'Bartek', 'Soczek']],
+      [['Tymek', 'Soczek', 'Kozon'], ['Wałach', 'Bartek', 'Kamil']]
+    ];
 
-    const storageKey = 'stamina-tactics-2v2-all-lineups-results';
-    const flagStorageKey = 'stamina-tactics-2v2-five-flags';
-    const teamOrderStorageKey = 'stamina-tactics-2v2-five-team-orders';
-    const settingsStorageKey = 'stamina-tactics-2v2-five-settings';
-    const playerProfilesStorageKey = 'stamina-tactics-2v2-five-player-profiles';
+    let firstRoundMatches = [...classicFirstRoundMatches];
+
+    let storageKey = 'stamina-tactics-universal-bootstrap-results';
+    let flagStorageKey = 'stamina-tactics-universal-bootstrap-flags';
+    let teamOrderStorageKey = 'stamina-tactics-universal-bootstrap-team-orders';
+    let settingsStorageKey = 'stamina-tactics-universal-bootstrap-settings';
+    let playerProfilesStorageKey = 'stamina-tactics-universal-bootstrap-player-profiles';
+    let seriesStorageKey = 'stamina-tactics-universal-bootstrap-series';
+    let seriesPlanStorageKey = 'stamina-tactics-universal-bootstrap-series-plan';
     const matchSoundPaths = {
-      ping: 'assets/audio/notification-ping-372479.mp3',
-      pingDouble: 'assets/audio/ping%20x2.mp3',
-      whistle: 'assets/audio/referee-whistle-291816.mp3'
+      ping: 'Stamina%20Tactics/assets/audio/notification-ping-372479.mp3',
+      pingDouble: 'Stamina%20Tactics/assets/audio/ping%20x2.mp3',
+      whistle: 'Stamina%20Tactics/assets/audio/referee-whistle-291816.mp3'
     };
     const soundClipSeconds = 2;
     const initialEloRating = 1000;
-    const eloKFactor = 16;
+    const dayEloKFactor = 16;
+    const globalEloProvisionalK = 40;
+    const globalEloEstablishedK = 20;
+    const globalEloProvisionalGames = 10;
+    const globalEloDifferenceCap = 400;
+    const oddsEloStartWeight = 0.85;
+    const oddsEloFloorWeight = 0.18;
+    const oddsEloDecayMatches = 4;
     const oddsAggression = 1.25;
     const clearFavoriteThreshold = 0.12;
     const pointSignalWeight = 0.7;
     const pointsProbabilityScale = 6;
     const maxPointDiffSignal = 24;
+    const playerAttributeBaseScore = 70;
+    const playerAttributePositiveRange = 29;
+    const playerAttributeNegativeRange = 35;
+    const playerAttributeEffectScale = 0.35;
+    const playerAttributeRegularization = 0.012;
+    const playerAttributeIterations = 650;
+    const playerAttributeLearningRate = 0.045;
+    const playerAttributeConfidenceGames = 5;
+    const playerAttributeTournamentWeights = [1, 1, 1, 0.55, 0.55, 0.2, 0.2, 0.2, 0.05, 0.05];
+    let currentTournamentMeta = null;
+    let cachedGlobalEloState = null;
+    let cachedPlayerAttributeState = null;
+    let playerRegistry = loadPlayerRegistry();
+    let selectedNewTournamentPlayerIds = new Set();
+    let playerProfileMatchLimit = 10;
+    let activePlayerProfileId = null;
+    let playerProfileReturnView = 'players';
+    let tournamentPlayerProfileReturnState = null;
+    let editingPlayerId = null;
+    let pendingPlayerPhoto = '';
+    let tournamentRegistry = loadTournamentRegistry();
+    migrateTournamentPlayerLinks();
     let settings = loadSettings();
     let matches = buildMatches();
-    const playerOrder = Object.fromEntries(players.map((player, index) => [player.name, index]));
+    let playerOrder = Object.fromEntries(players.map((player, index) => [player.name, index]));
     let playerProfiles = loadPlayerProfiles();
     let results = loadResults();
     let flagOrientations = loadFlagOrientations();
@@ -1639,6 +3641,8 @@
     const settingsErrorEl = document.querySelector('#settings-error');
     const matchMinutesInput = document.querySelector('#setting-match-minutes');
     const countdownSecondsInput = document.querySelector('#setting-countdown-seconds');
+    const playerCountSelect = document.querySelector('#setting-player-count');
+    const doubleLegsInput = document.querySelector('#setting-double-legs');
     const editPlayersButton = document.querySelector('#edit-players');
     const playerEditorEl = document.querySelector('#player-editor');
     const detailScreenEl = document.querySelector('#detail-screen');
@@ -1648,6 +3652,8 @@
     const detailTeam2NameEl = document.querySelector('#detail-team2-name');
     const detailTeam1StrengthEl = document.querySelector('#detail-team1-strength');
     const detailTeam2StrengthEl = document.querySelector('#detail-team2-strength');
+    const detailLineupTeam1El = document.querySelector('#detail-lineup-team1');
+    const detailLineupTeam2El = document.querySelector('#detail-lineup-team2');
     const detailTeam1ScoreEl = document.querySelector('#detail-team1-score');
     const detailTeam2ScoreEl = document.querySelector('#detail-team2-score');
     const timerLabelEl = document.querySelector('#timer-label');
@@ -1672,6 +3678,1269 @@
     const batteryTimerEl = document.querySelector('#battery-timer');
     const batteryTimerLabelEl = document.querySelector('#battery-timer-label');
     const batteryTimerDisplayEl = document.querySelector('#battery-timer-display');
+    const launcherEl = document.querySelector('#launcher');
+    const launcherHomeEl = document.querySelector('#launcher-home');
+    const launcherCreateEl = document.querySelector('#launcher-create');
+    const launcherPlayersEl = document.querySelector('#launcher-players');
+    const launcherEloRankingEl = document.querySelector('#launcher-elo-ranking');
+    const launcherPlayerDetailEl = document.querySelector('#launcher-player-detail');
+    const launcherNewPlayerEl = document.querySelector('#launcher-new-player');
+    const tournamentShellEl = document.querySelector('#tournament-shell');
+    const tournamentTitleEl = document.querySelector('#tournament-title');
+    const activeTournamentListEl = document.querySelector('#active-tournament-list');
+    const archiveTournamentListEl = document.querySelector('#archive-tournament-list');
+    const activeTournamentCountEl = document.querySelector('#active-tournament-count');
+    const archiveTournamentCountEl = document.querySelector('#archive-tournament-count');
+    const createTournamentFormEl = document.querySelector('#create-tournament-form');
+    const newTournamentNameEl = document.querySelector('#new-tournament-name');
+    const newPlayerListEl = document.querySelector('#new-player-list');
+    const playerSelectionCountEl = document.querySelector('#player-selection-count');
+    const createTournamentErrorEl = document.querySelector('#create-tournament-error');
+    const playerCountSettingEl = document.querySelector('#player-count-setting');
+    const doubleLegsSettingEl = document.querySelector('#double-legs-setting');
+    const formatSummarySettingEl = document.querySelector('#format-summary-setting');
+    const formatSummaryTextEl = document.querySelector('#format-summary-text');
+    const newTournamentFormatEl = document.querySelector('#new-tournament-format');
+    const newTournamentDoubleLegsEl = document.querySelector('#new-tournament-double-legs');
+    const newFormatDescriptionEl = document.querySelector('#new-format-description');
+    const newReturnRowEl = document.querySelector('#new-return-row');
+    const generateNextSeriesButton = document.querySelector('#generate-next-series');
+    const playerCardListEl = document.querySelector('#player-card-list');
+    const playersCountEl = document.querySelector('#players-count');
+    const eloRankingListEl = document.querySelector('#elo-ranking-list');
+    const playerDetailEl = document.querySelector('#player-detail');
+    const newPlayerFormEl = document.querySelector('#new-player-form');
+    const playerFormTitleEl = document.querySelector('#player-form-title');
+    const playerFormSubmitEl = document.querySelector('#player-form-submit');
+    const newPlayerFirstNameEl = document.querySelector('#new-player-first-name');
+    const newPlayerLastNameEl = document.querySelector('#new-player-last-name');
+    const newPlayerNicknameEl = document.querySelector('#new-player-nickname');
+    const newPlayerPhotoEl = document.querySelector('#new-player-photo');
+    const playerPhotoPreviewEl = document.querySelector('#player-photo-preview');
+    const removePlayerPhotoEl = document.querySelector('#remove-player-photo');
+    const newPlayerErrorEl = document.querySelector('#new-player-error');
+    const finishTournamentButton = document.querySelector('#finish-tournament');
+    const restoreTournamentButton = document.querySelector('#restore-tournament');
+
+    function defaultPlayerRegistry() {
+      return basePlayers.map((player, index) => ({
+        id: `player-${index + 1}`,
+        firstName: '',
+        lastName: '',
+        nickname: player.name,
+        photo: '',
+        createdAt: Date.now() + index
+      }));
+    }
+
+    function normalizeRegistryPlayer(player, index = 0) {
+      const legacyName = typeof player?.name === 'string' ? player.name.trim() : '';
+      const nickname = typeof player?.nickname === 'string' && player.nickname.trim()
+        ? player.nickname.trim()
+        : legacyName || `Zawodnik ${index + 1}`;
+      return {
+        id: typeof player?.id === 'string' && player.id ? player.id : `player-${Date.now().toString(36)}-${index}`,
+        firstName: typeof player?.firstName === 'string' ? player.firstName.trim() : '',
+        lastName: typeof player?.lastName === 'string' ? player.lastName.trim() : '',
+        nickname,
+        photo: typeof player?.photo === 'string' && player.photo.startsWith('data:image/') ? player.photo : '',
+        createdAt: Number.isFinite(player?.createdAt) ? player.createdAt : Date.now() + index
+      };
+    }
+
+    function loadPlayerRegistry() {
+      try {
+        const rawSaved = localStorage.getItem(playerRegistryKey);
+        const saved = JSON.parse(rawSaved);
+        if (Array.isArray(saved) && saved.length) {
+          const normalized = saved.map(normalizeRegistryPlayer);
+          const serialized = JSON.stringify(normalized);
+          if (serialized !== rawSaved) setStaminaStorageItem(playerRegistryKey, serialized);
+          return normalized;
+        }
+      } catch {}
+      const defaults = defaultPlayerRegistry();
+      setStaminaStorageItem(playerRegistryKey, JSON.stringify(defaults));
+      return defaults;
+    }
+
+    function savePlayerRegistry() {
+      setStaminaStorageItem(playerRegistryKey, JSON.stringify(playerRegistry));
+      cachedGlobalEloState = null;
+      cachedPlayerAttributeState = null;
+    }
+
+    function registryPlayer(playerId) {
+      return playerRegistry.find(player => player.id === playerId) || null;
+    }
+
+    function createPlayerRecord({ firstName = '', lastName = '', nickname, photo = '' }) {
+      return normalizeRegistryPlayer({
+        id: `player-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        firstName,
+        lastName,
+        nickname,
+        photo,
+        createdAt: Date.now()
+      });
+    }
+
+    function playerNickname(player) {
+      return player?.nickname || '';
+    }
+
+    function playerFullName(player) {
+      return [player?.firstName, player?.lastName].filter(Boolean).join(' ');
+    }
+
+    function migrateTournamentPlayerLinks() {
+      let registryChanged = false;
+      let tournamentsChanged = false;
+      tournamentRegistry.forEach(tournament => {
+        if (Array.isArray(tournament.playerIds) && tournament.playerIds.length === tournament.format) return;
+        const prefix = tournamentStoragePrefix(tournament.id);
+        let profiles = {};
+        try {
+          profiles = JSON.parse(localStorage.getItem(`${prefix}-player-profiles`)) || {};
+        } catch {}
+        tournament.playerIds = basePlayers.slice(0, tournament.format).map(slot => {
+          const savedProfile = profiles[slot.name] || slot;
+          const displayName = typeof savedProfile.name === 'string' && savedProfile.name.trim()
+            ? savedProfile.name.trim()
+            : slot.name;
+          let linkedPlayer = playerRegistry.find(player => playerNickname(player).toLocaleLowerCase('pl') === displayName.toLocaleLowerCase('pl'));
+          if (!linkedPlayer) {
+            linkedPlayer = createPlayerRecord({ nickname: displayName });
+            playerRegistry.push(linkedPlayer);
+            registryChanged = true;
+          }
+          return linkedPlayer.id;
+        });
+        tournamentsChanged = true;
+      });
+      if (registryChanged) savePlayerRegistry();
+      if (tournamentsChanged) saveTournamentRegistry();
+    }
+
+    function loadTournamentRegistry() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(tournamentRegistryKey));
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTournamentRegistry() {
+      setStaminaStorageItem(tournamentRegistryKey, JSON.stringify(tournamentRegistry));
+      cachedGlobalEloState = null;
+      cachedPlayerAttributeState = null;
+    }
+
+    function tournamentStoragePrefix(tournamentId) {
+      return `stamina-tactics-universal-${tournamentId}`;
+    }
+
+    function assignTournamentStorageKeys(tournamentId) {
+      const prefix = tournamentStoragePrefix(tournamentId);
+      storageKey = `${prefix}-results`;
+      flagStorageKey = `${prefix}-flags`;
+      teamOrderStorageKey = `${prefix}-team-orders`;
+      settingsStorageKey = `${prefix}-settings`;
+      playerProfilesStorageKey = `${prefix}-player-profiles`;
+      seriesStorageKey = `${prefix}-series`;
+      seriesPlanStorageKey = `${prefix}-series-plan`;
+    }
+
+    function formatTournamentDate(timestamp) {
+      return new Intl.DateTimeFormat('pl-PL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).format(new Date(timestamp));
+    }
+
+    function tournamentFormatInfo(playerCount) {
+      const formats = {
+        4: { short: '2v2', baseMatches: 3, description: '2v2 • bez pauz • każdy zawodnik zagra w parze z każdym' },
+        5: { short: '2v2', baseMatches: 15, description: '2v2 • jedna osoba pauzuje • wszystkie możliwe składy' },
+        6: { short: '3v3', baseMatches: 10, description: '3v3 • klasyczne Stamina Tactics • wszystkie możliwe składy' },
+        7: { short: '3v3', baseMatches: 7, description: '3v3 • jedna osoba pauzuje • format seryjny' }
+      };
+      return formats[playerCount] || { short: `${playerCount} graczy`, baseMatches: 0, description: '' };
+    }
+
+    function updateNewTournamentFormatDescription({ resetReturns = false } = {}) {
+      const playerCount = Number(newTournamentFormatEl.value);
+      if (resetReturns) newTournamentDoubleLegsEl.checked = playerCount === 6;
+      const isSeriesFormat = playerCount === 7;
+      if (isSeriesFormat) newTournamentDoubleLegsEl.checked = false;
+      newTournamentDoubleLegsEl.disabled = isSeriesFormat;
+      newReturnRowEl.classList.toggle('is-disabled', isSeriesFormat);
+      const info = tournamentFormatInfo(playerCount);
+      const totalMatches = isSeriesFormat ? 7 : info.baseMatches * (newTournamentDoubleLegsEl.checked ? 2 : 1);
+      newFormatDescriptionEl.textContent = isSeriesFormat
+        ? `${info.short} • jedna osoba pauzuje • start od 1 serii (7 meczów), kolejne serie układane według tabeli i siły drużyn`
+        : `${info.description} • ${totalMatches} ${totalMatches === 1 ? 'mecz' : 'meczów'}${newTournamentDoubleLegsEl.checked ? ' z rewanżami' : ''}`;
+    }
+
+    function tournamentResultSummary(tournament) {
+      const prefix = tournamentStoragePrefix(tournament.id);
+      let savedResults = [];
+      let savedSettings = {};
+      try {
+        savedResults = JSON.parse(localStorage.getItem(`${prefix}-results`)) || [];
+        savedSettings = JSON.parse(localStorage.getItem(`${prefix}-settings`)) || {};
+      } catch {}
+      let baseMatches = tournamentFormatInfo(tournament.format).baseMatches;
+      if (tournament.format === 7) {
+        try {
+          const savedSeries = JSON.parse(localStorage.getItem(`${prefix}-series`));
+          if (Array.isArray(savedSeries) && savedSeries.length) baseMatches = savedSeries.flat().length;
+        } catch {}
+      }
+      const total = baseMatches * (tournament.format === 7 ? 1 : savedSettings.doubleLegs ? 2 : 1);
+      const complete = Array.isArray(savedResults)
+        ? savedResults.filter(result => Number.isInteger(result?.team1) && Number.isInteger(result?.team2)).length
+        : 0;
+      return { complete, total };
+    }
+
+    function tournamentCardMarkup(tournament) {
+      const summary = tournamentResultSummary(tournament);
+      const percentage = Math.round((summary.complete / summary.total) * 100);
+      const formatLabel = `${tournamentFormatInfo(tournament.format).short} • ${tournament.format} osób`;
+      return `
+        <div class="tournament-entry">
+          <button class="tournament-card" type="button" data-tournament-id="${escapeHtml(tournament.id)}">
+            <span class="tournament-card-top">
+              <span class="tournament-card-name">${escapeHtml(tournament.name)}</span>
+              <span class="tournament-card-format">${formatLabel}</span>
+            </span>
+            <span class="tournament-card-meta">${formatTournamentDate(tournament.finishedAt || tournament.createdAt)}</span>
+            <span class="tournament-progress"><span style="width:${percentage}%"></span></span>
+            <span class="tournament-card-bottom"><span>${summary.complete}/${summary.total} wyników</span><span>${tournament.finishedAt ? 'Zakończony' : `${percentage}%`}</span></span>
+          </button>
+          <button class="tournament-delete" type="button" data-delete-tournament-id="${escapeHtml(tournament.id)}" aria-label="Usuń turniej ${escapeHtml(tournament.name)}">✕</button>
+        </div>
+      `;
+    }
+
+    function archivedTournamentWinner(tournament) {
+      const prefix = tournamentStoragePrefix(tournament.id);
+      let savedResults = [];
+      let savedSettings = {};
+      let savedProfiles = {};
+      try {
+        savedResults = JSON.parse(localStorage.getItem(`${prefix}-results`)) || [];
+        savedSettings = JSON.parse(localStorage.getItem(`${prefix}-settings`)) || {};
+        savedProfiles = JSON.parse(localStorage.getItem(`${prefix}-player-profiles`)) || {};
+      } catch {}
+
+      if (!Array.isArray(savedResults) || !savedResults.some(result => Number.isInteger(result?.team1) && Number.isInteger(result?.team2))) {
+        return { name: '—', color: null };
+      }
+
+      const tournamentPlayers = basePlayers.slice(0, tournament.format);
+      const playerNames = tournamentPlayers.map(player => player.name);
+      let firstRound = buildBaseMatchesForFormat(tournament.format, playerNames);
+      if (tournament.format === 7) {
+        try {
+          const savedSeries = JSON.parse(localStorage.getItem(`${prefix}-series`));
+          if (Array.isArray(savedSeries) && savedSeries.length) firstRound = savedSeries.flat();
+        } catch {}
+      }
+      const tournamentMatches = savedSettings.doubleLegs !== true
+        ? firstRound
+        : [...firstRound, ...firstRound.map(match => match[2]
+          ? [match[1], match[0], match[2]]
+          : [match[1], match[0]])];
+      const table = Object.fromEntries(tournamentPlayers.map((player, index) => [player.name, {
+        name: player.name,
+        order: index,
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0
+      }]));
+
+      tournamentMatches.forEach((match, matchIndex) => {
+        const result = savedResults[matchIndex];
+        if (!Number.isInteger(result?.team1) || !Number.isInteger(result?.team2)) return;
+        const applyResult = (team, scored, conceded) => team.forEach(playerName => {
+          table[playerName].goalsFor += scored;
+          table[playerName].goalsAgainst += conceded;
+          table[playerName].points += scored > conceded ? 3 : scored === conceded ? 1 : 0;
+        });
+        applyResult(match[0], result.team1, result.team2);
+        applyResult(match[1], result.team2, result.team1);
+      });
+
+      const winner = Object.values(table).sort((a, b) => {
+        const goalDifferenceA = a.goalsFor - a.goalsAgainst;
+        const goalDifferenceB = b.goalsFor - b.goalsAgainst;
+        return b.points - a.points
+          || goalDifferenceB - goalDifferenceA
+          || b.goalsFor - a.goalsFor
+          || a.order - b.order;
+      })[0];
+      const profile = savedProfiles[winner.name] || {};
+      const linkedWinner = registryPlayer(tournament.playerIds?.[winner.order]);
+      return {
+        name: linkedWinner
+          ? playerNickname(linkedWinner)
+          : typeof profile.name === 'string' && profile.name.trim() ? profile.name.trim() : winner.name,
+        color: isHexColor(profile.color) ? profile.color : basePlayers[winner.order].color
+      };
+    }
+
+    function archiveRowMarkup(tournament) {
+      const winner = archivedTournamentWinner(tournament);
+      const formatLabel = tournamentFormatInfo(tournament.format).short;
+      return `
+        <div class="archive-entry">
+          <button class="archive-row" type="button" data-tournament-id="${escapeHtml(tournament.id)}">
+            <span class="archive-name">${escapeHtml(tournament.name)}</span>
+            <span class="archive-format">${formatLabel}</span>
+            <span class="archive-winner">
+              ${winner.color ? `<span class="archive-winner-color" style="background:${winner.color}"></span>` : ''}
+              <span class="archive-winner-name">${escapeHtml(winner.name)}</span>
+            </span>
+          </button>
+          <button class="tournament-delete" type="button" data-delete-tournament-id="${escapeHtml(tournament.id)}" aria-label="Usuń turniej ${escapeHtml(tournament.name)}">✕</button>
+        </div>
+      `;
+    }
+
+    function renderTournamentLauncher() {
+      const active = tournamentRegistry
+        .filter(tournament => !tournament.finishedAt)
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+      const archived = tournamentRegistry
+        .filter(tournament => tournament.finishedAt)
+        .sort((a, b) => b.finishedAt - a.finishedAt);
+
+      activeTournamentCountEl.textContent = String(active.length);
+      archiveTournamentCountEl.textContent = String(archived.length);
+      activeTournamentListEl.innerHTML = active.length
+        ? active.map(tournamentCardMarkup).join('')
+        : '<div class="launcher-empty">Nie ma aktywnych turniejów.</div>';
+      archiveTournamentListEl.innerHTML = archived.length
+        ? archived.map(archiveRowMarkup).join('')
+        : '<div class="launcher-empty">Zakończone turnieje pojawią się tutaj.</div>';
+    }
+
+    function deleteTournament(tournamentId) {
+      const tournament = tournamentRegistry.find(item => item.id === tournamentId);
+      if (!tournament) return;
+      const summary = tournamentResultSummary(tournament);
+      const resultWarning = summary.complete
+        ? ` Turniej zawiera ${summary.complete} ${summary.complete === 1 ? 'zapisany wynik' : 'zapisanych wyników'}.`
+        : '';
+      if (!window.confirm(`Czy na pewno usunąć turniej „${tournament.name}”?${resultWarning} Tej operacji nie można cofnąć.`)) return;
+
+      const prefix = tournamentStoragePrefix(tournament.id);
+      ['results', 'flags', 'team-orders', 'settings', 'player-profiles', 'series', 'series-plan']
+        .forEach(suffix => removeStaminaStorageItem(`${prefix}-${suffix}`));
+      tournamentRegistry = tournamentRegistry.filter(item => item.id !== tournament.id);
+      saveTournamentRegistry();
+      renderTournamentLauncher();
+    }
+
+    function playerInitials(name) {
+      return name.trim().split(/\s+/).slice(0, 2).map(part => part[0] || '').join('');
+    }
+
+    function tournamentScheduleForStatistics(tournament) {
+      const prefix = tournamentStoragePrefix(tournament.id);
+      if (tournament.format === 7) {
+        try {
+          const savedSeries = JSON.parse(localStorage.getItem(`${prefix}-series`));
+          return Array.isArray(savedSeries) ? savedSeries.flat() : [];
+        } catch {
+          return [];
+        }
+      }
+      let savedSettings = {};
+      try {
+        savedSettings = JSON.parse(localStorage.getItem(`${prefix}-settings`)) || {};
+      } catch {}
+      const firstRound = buildBaseMatchesForFormat(
+        tournament.format,
+        basePlayers.slice(0, tournament.format).map(player => player.name)
+      );
+      return savedSettings.doubleLegs
+        ? [...firstRound, ...firstRound.map(match => match[2] ? [match[1], match[0], match[2]] : [match[1], match[0]])]
+        : firstRound;
+    }
+
+    function globalEloMatchKey(tournamentId, matchIndex) {
+      return `${tournamentId}::${matchIndex}`;
+    }
+
+    function tournamentPlayerId(tournament, canonicalName) {
+      const slotIndex = basePlayers.findIndex(player => player.name === canonicalName);
+      return slotIndex >= 0 ? tournament.playerIds?.[slotIndex] || null : null;
+    }
+
+    function completedGlobalEloEvents() {
+      const events = [];
+      tournamentRegistry.forEach(tournament => {
+        const schedule = tournamentScheduleForStatistics(tournament);
+        let savedResults = [];
+        let savedSettings = {};
+        try {
+          savedResults = JSON.parse(localStorage.getItem(`${tournamentStoragePrefix(tournament.id)}-results`)) || [];
+        } catch {}
+        try {
+          savedSettings = JSON.parse(localStorage.getItem(`${tournamentStoragePrefix(tournament.id)}-settings`)) || {};
+        } catch {}
+        const duration = Number.isFinite(savedSettings.matchDuration)
+          ? clamp(savedSettings.matchDuration, 60, 1800)
+          : 180;
+        schedule.forEach((match, matchIndex) => {
+          const result = savedResults[matchIndex];
+          if (!Number.isInteger(result?.team1) || !Number.isInteger(result?.team2)) return;
+          const teamA = match[0].map(name => tournamentPlayerId(tournament, name));
+          const teamB = match[1].map(name => tournamentPlayerId(tournament, name));
+          if (teamA.some(id => !id) || teamB.some(id => !id)) return;
+          const fallbackTimestamp = tournament.finishedAt || tournament.createdAt || 0;
+          events.push({
+            key: globalEloMatchKey(tournament.id, matchIndex),
+            tournamentId: tournament.id,
+            tournamentCreatedAt: tournament.createdAt || 0,
+            matchIndex,
+            timestamp: Number.isFinite(result.completedAt) ? result.completedAt : fallbackTimestamp,
+            teamA,
+            teamB,
+            goalsA: result.team1,
+            goalsB: result.team2,
+            teamSize: match[0].length,
+            format: `${match[0].length}v${match[1].length}`,
+            duration
+          });
+        });
+      });
+      return events.sort((a, b) => (
+        a.timestamp - b.timestamp
+        || a.tournamentCreatedAt - b.tournamentCreatedAt
+        || a.tournamentId.localeCompare(b.tournamentId)
+        || a.matchIndex - b.matchIndex
+      ));
+    }
+
+    function globalEloExpectedScore(teamARating, teamBRating) {
+      const difference = clamp(teamBRating - teamARating, -globalEloDifferenceCap, globalEloDifferenceCap);
+      return 1 / (1 + (10 ** (difference / 400)));
+    }
+
+    function globalEloKFactor(gamesPlayed) {
+      return gamesPlayed < globalEloProvisionalGames ? globalEloProvisionalK : globalEloEstablishedK;
+    }
+
+    function buildGlobalEloState() {
+      const ratings = {};
+      const games = {};
+      const peaks = {};
+      const transactions = new Map();
+      playerRegistry.forEach(player => {
+        ratings[player.id] = initialEloRating;
+        games[player.id] = 0;
+        peaks[player.id] = initialEloRating;
+      });
+
+      completedGlobalEloEvents().forEach(event => {
+        [...event.teamA, ...event.teamB].forEach(playerId => {
+          if (!Number.isFinite(ratings[playerId])) ratings[playerId] = initialEloRating;
+          if (!Number.isInteger(games[playerId])) games[playerId] = 0;
+          if (!Number.isFinite(peaks[playerId])) peaks[playerId] = initialEloRating;
+        });
+        const ratingsBefore = { ...ratings };
+        const teamARating = event.teamA.reduce((sum, id) => sum + ratingsBefore[id], 0) / event.teamA.length;
+        const teamBRating = event.teamB.reduce((sum, id) => sum + ratingsBefore[id], 0) / event.teamB.length;
+        const expectedA = globalEloExpectedScore(teamARating, teamBRating);
+        const expectedB = 1 - expectedA;
+        const actualA = event.goalsA === event.goalsB ? 0.5 : event.goalsA > event.goalsB ? 1 : 0;
+        const actualB = 1 - actualA;
+        const deltas = {};
+
+        event.teamA.forEach(playerId => {
+          const delta = globalEloKFactor(games[playerId]) * (actualA - expectedA);
+          deltas[playerId] = delta;
+          ratings[playerId] += delta;
+          games[playerId] += 1;
+          peaks[playerId] = Math.max(peaks[playerId], ratings[playerId]);
+        });
+        event.teamB.forEach(playerId => {
+          const delta = globalEloKFactor(games[playerId]) * (actualB - expectedB);
+          deltas[playerId] = delta;
+          ratings[playerId] += delta;
+          games[playerId] += 1;
+          peaks[playerId] = Math.max(peaks[playerId], ratings[playerId]);
+        });
+        transactions.set(event.key, {
+          ...event,
+          ratingsBefore,
+          ratingsAfter: { ...ratings },
+          teamARating,
+          teamBRating,
+          expectedA,
+          expectedB,
+          actualA,
+          actualB,
+          deltas
+        });
+      });
+
+      return { ratings, games, peaks, transactions };
+    }
+
+    function globalEloState() {
+      if (!cachedGlobalEloState) cachedGlobalEloState = buildGlobalEloState();
+      return cachedGlobalEloState;
+    }
+
+    function applyPlayerAttributeTournamentWeights(events) {
+      const tournamentGroups = new Map();
+      events.forEach((event, eventIndex) => {
+        const tournamentId = event.tournamentId || `attribute-event-${eventIndex}`;
+        if (!tournamentGroups.has(tournamentId)) {
+          tournamentGroups.set(tournamentId, {
+            id: tournamentId,
+            timestamp: 0,
+            createdAt: Number.isFinite(event.tournamentCreatedAt) ? event.tournamentCreatedAt : 0,
+            events: [],
+            participants: new Set()
+          });
+        }
+        const group = tournamentGroups.get(tournamentId);
+        group.events.push(event);
+        group.timestamp = Math.max(
+          group.timestamp,
+          Number.isFinite(event.timestamp) ? event.timestamp : 0,
+          Number.isFinite(event.tournamentCreatedAt) ? event.tournamentCreatedAt : 0
+        );
+        [...event.teamA, ...event.teamB].forEach(playerId => group.participants.add(playerId));
+      });
+
+      const tournamentsByPlayer = {};
+      tournamentGroups.forEach(group => {
+        group.participants.forEach(playerId => {
+          if (!tournamentsByPlayer[playerId]) tournamentsByPlayer[playerId] = [];
+          tournamentsByPlayer[playerId].push(group);
+        });
+      });
+
+      const tournamentWeightByPlayer = {};
+      Object.entries(tournamentsByPlayer).forEach(([playerId, groups]) => {
+        groups.sort((a, b) => (
+          b.timestamp - a.timestamp
+          || b.createdAt - a.createdAt
+          || b.id.localeCompare(a.id)
+        ));
+        tournamentWeightByPlayer[playerId] = {};
+        groups.forEach((group, index) => {
+          const tournamentWeight = playerAttributeTournamentWeights[index] || 0;
+          tournamentWeightByPlayer[playerId][group.id] = tournamentWeight;
+        });
+      });
+
+      events.forEach(event => {
+        event.attributeWeights = {};
+        const participantIds = [...new Set([...event.teamA, ...event.teamB])];
+        participantIds.forEach(playerId => {
+          event.attributeWeights[playerId] = tournamentWeightByPlayer[playerId]?.[event.tournamentId] || 0;
+        });
+        event.attributeEventWeight = participantIds.length
+          ? participantIds.reduce((sum, playerId) => sum + event.attributeWeights[playerId], 0) / participantIds.length
+          : 0;
+      });
+
+      return events;
+    }
+
+    function fitPlayerAttributeEffects(sourceEvents = completedGlobalEloEvents()) {
+      let events = sourceEvents.filter(event => (
+        Array.isArray(event.teamA)
+        && Array.isArray(event.teamB)
+        && event.teamA.length > 0
+        && event.teamB.length > 0
+        && Number.isFinite(event.goalsA)
+        && Number.isFinite(event.goalsB)
+      )).map(event => ({
+        ...event,
+        format: event.format || `${event.teamA.length}v${event.teamB.length}`,
+        duration: Number.isFinite(event.duration) ? clamp(event.duration, 60, 1800) : 180
+      }));
+      events = applyPlayerAttributeTournamentWeights(events)
+        .filter(event => event.attributeEventWeight > 0);
+      const games = {};
+      const attackEffects = {};
+      const defenceEffects = {};
+      const formatTotals = {};
+
+      playerRegistry.forEach(player => { games[player.id] = 0; });
+      events.forEach(event => {
+        if (!formatTotals[event.format]) formatTotals[event.format] = { goals: 0, exposure: 0 };
+        const exposure = event.duration / 180;
+        formatTotals[event.format].goals += event.attributeEventWeight * (event.goalsA + event.goalsB);
+        formatTotals[event.format].exposure += event.attributeEventWeight * exposure * 2;
+        [...event.teamA, ...event.teamB].forEach(playerId => {
+          if ((event.attributeWeights[playerId] || 0) > 0) games[playerId] = (games[playerId] || 0) + 1;
+          attackEffects[playerId] = attackEffects[playerId] || 0;
+          defenceEffects[playerId] = defenceEffects[playerId] || 0;
+        });
+      });
+
+      const formatBaselines = Object.fromEntries(Object.entries(formatTotals).map(([format, totals]) => [
+        format,
+        clamp(totals.goals / Math.max(totals.exposure, 0.01), 0.15, 12)
+      ]));
+      const activeIds = Object.keys(games).filter(playerId => games[playerId] > 0);
+      if (!events.length || !activeIds.length) {
+        return { attackEffects, defenceEffects, games, formatBaselines };
+      }
+
+      const attackMoment = {};
+      const defenceMoment = {};
+      const attackVelocity = {};
+      const defenceVelocity = {};
+      activeIds.forEach(playerId => {
+        attackMoment[playerId] = 0;
+        defenceMoment[playerId] = 0;
+        attackVelocity[playerId] = 0;
+        defenceVelocity[playerId] = 0;
+      });
+      const observationWeight = Math.max(
+        events.reduce((sum, event) => sum + event.attributeEventWeight * 2, 0),
+        0.01
+      );
+      const beta1 = 0.9;
+      const beta2 = 0.999;
+
+      for (let iteration = 1; iteration <= playerAttributeIterations; iteration += 1) {
+        const attackGradient = Object.fromEntries(activeIds.map(playerId => [playerId, 0]));
+        const defenceGradient = Object.fromEntries(activeIds.map(playerId => [playerId, 0]));
+
+        const addObservationGradient = (event, attackingTeam, defendingTeam, goals, baseRate, exposure) => {
+          const attackMean = attackingTeam.reduce((sum, playerId) => sum + attackEffects[playerId], 0) / attackingTeam.length;
+          const defenceMean = defendingTeam.reduce((sum, playerId) => sum + defenceEffects[playerId], 0) / defendingTeam.length;
+          const logRate = Math.log(Math.max(baseRate * exposure, 0.001)) + attackMean - defenceMean;
+          const predictedGoals = Math.exp(clamp(logRate, -6, 6));
+          const error = predictedGoals - goals;
+          attackingTeam.forEach(playerId => {
+            const weight = event.attributeWeights[playerId] || 0;
+            attackGradient[playerId] += weight * error / attackingTeam.length;
+          });
+          defendingTeam.forEach(playerId => {
+            const weight = event.attributeWeights[playerId] || 0;
+            defenceGradient[playerId] -= weight * error / defendingTeam.length;
+          });
+        };
+
+        events.forEach(event => {
+          const baseRate = formatBaselines[event.format];
+          const exposure = event.duration / 180;
+          addObservationGradient(event, event.teamA, event.teamB, event.goalsA, baseRate, exposure);
+          addObservationGradient(event, event.teamB, event.teamA, event.goalsB, baseRate, exposure);
+        });
+
+        activeIds.forEach(playerId => {
+          const attackGrad = attackGradient[playerId] / observationWeight
+            + playerAttributeRegularization * attackEffects[playerId];
+          const defenceGrad = defenceGradient[playerId] / observationWeight
+            + playerAttributeRegularization * defenceEffects[playerId];
+          attackMoment[playerId] = beta1 * attackMoment[playerId] + (1 - beta1) * attackGrad;
+          defenceMoment[playerId] = beta1 * defenceMoment[playerId] + (1 - beta1) * defenceGrad;
+          attackVelocity[playerId] = beta2 * attackVelocity[playerId] + (1 - beta2) * attackGrad ** 2;
+          defenceVelocity[playerId] = beta2 * defenceVelocity[playerId] + (1 - beta2) * defenceGrad ** 2;
+          const attackStep = (attackMoment[playerId] / (1 - beta1 ** iteration))
+            / (Math.sqrt(attackVelocity[playerId] / (1 - beta2 ** iteration)) + 1e-8);
+          const defenceStep = (defenceMoment[playerId] / (1 - beta1 ** iteration))
+            / (Math.sqrt(defenceVelocity[playerId] / (1 - beta2 ** iteration)) + 1e-8);
+          attackEffects[playerId] = clamp(
+            attackEffects[playerId] - playerAttributeLearningRate * attackStep,
+            -1.5,
+            1.5
+          );
+          defenceEffects[playerId] = clamp(
+            defenceEffects[playerId] - playerAttributeLearningRate * defenceStep,
+            -1.5,
+            1.5
+          );
+        });
+
+        const attackMean = activeIds.reduce((sum, playerId) => sum + attackEffects[playerId], 0) / activeIds.length;
+        const defenceMean = activeIds.reduce((sum, playerId) => sum + defenceEffects[playerId], 0) / activeIds.length;
+        activeIds.forEach(playerId => {
+          attackEffects[playerId] -= attackMean;
+          defenceEffects[playerId] -= defenceMean;
+        });
+      }
+
+      return { attackEffects, defenceEffects, games, formatBaselines };
+    }
+
+    function buildPlayerAttributeState() {
+      const fitted = fitPlayerAttributeEffects();
+      const eloState = globalEloState();
+      const ratedPlayerIds = Object.keys(eloState.games).filter(playerId => eloState.games[playerId] > 0);
+      const meanElo = ratedPlayerIds.length
+        ? ratedPlayerIds.reduce((sum, playerId) => sum + eloState.ratings[playerId], 0) / ratedPlayerIds.length
+        : initialEloRating;
+      const byPlayer = {};
+
+      const mapAttributeSignal = signal => {
+        const range = signal < 0 ? playerAttributeNegativeRange : playerAttributePositiveRange;
+        return playerAttributeBaseScore + range * Math.tanh(signal);
+      };
+
+      playerRegistry.forEach(player => {
+        const gamesPlayed = fitted.games[player.id] || 0;
+        const confidence = gamesPlayed / (gamesPlayed + playerAttributeConfidenceGames);
+        const attackRaw = mapAttributeSignal(
+          (fitted.attackEffects[player.id] || 0) / playerAttributeEffectScale
+        );
+        const defenceRaw = mapAttributeSignal(
+          (fitted.defenceEffects[player.id] || 0) / playerAttributeEffectScale
+        );
+        const attack = Math.round(clamp(
+          playerAttributeBaseScore + confidence * (attackRaw - playerAttributeBaseScore),
+          40,
+          99
+        ));
+        const defence = Math.round(clamp(
+          playerAttributeBaseScore + confidence * (defenceRaw - playerAttributeBaseScore),
+          40,
+          99
+        ));
+        const eloScore = gamesPlayed
+          ? mapAttributeSignal(((eloState.ratings[player.id] ?? initialEloRating) - meanElo) / 180)
+          : playerAttributeBaseScore;
+        const overall = Math.round(clamp(0.5 * eloScore + 0.25 * attack + 0.25 * defence, 40, 99));
+        byPlayer[player.id] = { attack, defence, overall, games: gamesPlayed };
+      });
+
+      return { byPlayer, meanElo, fitted };
+    }
+
+    function playerAttributeState() {
+      if (!cachedPlayerAttributeState) cachedPlayerAttributeState = buildPlayerAttributeState();
+      return cachedPlayerAttributeState;
+    }
+
+    function playerAttributes(playerId) {
+      return playerAttributeState().byPlayer[playerId] || {
+        attack: playerAttributeBaseScore,
+        defence: playerAttributeBaseScore,
+        overall: playerAttributeBaseScore,
+        games: 0
+      };
+    }
+
+    function playerCardTier(overall) {
+      if (overall <= 60) return { className: 'is-common', label: 'zwykła szara' };
+      if (overall <= 75) return { className: 'is-bronze', label: 'brązowa' };
+      if (overall < 85) return { className: 'is-silver', label: 'srebrna' };
+      return { className: 'is-gold', label: 'złota' };
+    }
+
+    function globalEloRatingsBeforeMatch(tournamentId, matchIndex) {
+      const state = globalEloState();
+      return state.transactions.get(globalEloMatchKey(tournamentId, matchIndex))?.ratingsBefore || state.ratings;
+    }
+
+    function globalTeamElo(team, tournament = currentTournamentMeta, ratings = globalEloState().ratings) {
+      if (!tournament || !team.length) return initialEloRating;
+      const playerIds = team.map(name => tournamentPlayerId(tournament, name));
+      if (playerIds.some(id => !id)) return initialEloRating;
+      return playerIds.reduce((sum, id) => sum + (ratings[id] ?? initialEloRating), 0) / playerIds.length;
+    }
+
+    function tournamentDisplayName(tournament, canonicalName) {
+      const slotIndex = basePlayers.findIndex(player => player.name === canonicalName);
+      const linkedPlayer = registryPlayer(tournament.playerIds?.[slotIndex]);
+      return linkedPlayer ? playerNickname(linkedPlayer) : canonicalName;
+    }
+
+    function calculateGlobalPlayerStats(playerId) {
+      const stats = { matches: 0, tournaments: 0, wins: 0, draws: 0, losses: 0, recent: [] };
+      tournamentRegistry.forEach((tournament, tournamentOrder) => {
+        const slotIndex = tournament.playerIds?.indexOf(playerId) ?? -1;
+        if (slotIndex < 0) return;
+        stats.tournaments += 1;
+        const canonicalName = basePlayers[slotIndex]?.name;
+        if (!canonicalName) return;
+        const schedule = tournamentScheduleForStatistics(tournament);
+        let savedResults = [];
+        try {
+          savedResults = JSON.parse(localStorage.getItem(`${tournamentStoragePrefix(tournament.id)}-results`)) || [];
+        } catch {}
+
+        schedule.forEach((match, matchIndex) => {
+          const result = savedResults[matchIndex];
+          if (!Number.isInteger(result?.team1) || !Number.isInteger(result?.team2)) return;
+          const side = match[0].includes(canonicalName) ? 0 : match[1].includes(canonicalName) ? 1 : -1;
+          if (side < 0) return;
+          const goalsFor = side === 0 ? result.team1 : result.team2;
+          const goalsAgainst = side === 0 ? result.team2 : result.team1;
+          const outcome = goalsFor > goalsAgainst ? 'W' : goalsFor < goalsAgainst ? 'L' : 'D';
+          stats.matches += 1;
+          if (outcome === 'W') stats.wins += 1;
+          else if (outcome === 'D') stats.draws += 1;
+          else stats.losses += 1;
+          stats.recent.push({
+            tournamentId: tournament.id,
+            tournamentOrder,
+            tournamentTimestamp: tournament.finishedAt || tournament.createdAt || tournament.updatedAt || 0,
+            matchIndex,
+            outcome,
+            homeTeam: match[0].map(name => tournamentDisplayName(tournament, name)).join(' • '),
+            awayTeam: match[1].map(name => tournamentDisplayName(tournament, name)).join(' • '),
+            homeScore: result.team1,
+            awayScore: result.team2,
+            playerSide: side,
+            timestamp: result.completedAt || tournament.finishedAt || tournament.updatedAt || tournament.createdAt
+          });
+        });
+      });
+      stats.recent.sort((a, b) => (
+        b.tournamentTimestamp - a.tournamentTimestamp
+        || b.tournamentOrder - a.tournamentOrder
+        || b.matchIndex - a.matchIndex
+        || b.timestamp - a.timestamp
+      ));
+      return stats;
+    }
+
+    function playerAvatarMarkup(player, className = 'player-avatar', overlayMarkup = '') {
+      const content = player.photo
+        ? `<span class="avatar-photo-layer" aria-hidden="true"><img src="${escapeHtml(player.photo)}" alt=""></span>`
+        : escapeHtml(playerInitials(playerNickname(player)));
+      const tier = playerCardTier(playerAttributes(player.id).overall);
+      return `<span class="${className} tier-avatar ${tier.className}">${content}${overlayMarkup}</span>`;
+    }
+
+    function formatPlayerMatchDate(timestamp) {
+      if (!Number.isFinite(timestamp)) return '—';
+      return new Intl.DateTimeFormat('pl-PL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      }).format(new Date(timestamp));
+    }
+
+    function playerCardMarkup(player) {
+      const stats = calculateGlobalPlayerStats(player.id);
+      const fullName = playerFullName(player);
+      return `
+        <button class="player-card" type="button" data-player-card="${player.id}">
+          ${playerAvatarMarkup(player)}
+          <span>
+            <span class="player-card-name">${escapeHtml(playerNickname(player))}</span>
+            ${fullName ? `<span class="player-card-real-name">${escapeHtml(fullName)}</span>` : ''}
+            <span class="player-card-meta">${stats.matches} meczów • ${stats.tournaments} turniejów • ${stats.wins}W ${stats.draws}D ${stats.losses}L</span>
+          </span>
+          <span class="player-card-arrow">›</span>
+        </button>
+      `;
+    }
+
+    function renderPlayerCards() {
+      playersCountEl.textContent = String(playerRegistry.length);
+      playerCardListEl.innerHTML = playerRegistry.length
+        ? [...playerRegistry].sort((a, b) => playerNickname(a).localeCompare(playerNickname(b), 'pl')).map(playerCardMarkup).join('')
+        : '<div class="launcher-empty">Nie utworzono jeszcze żadnego zawodnika.</div>';
+    }
+
+    function renderEloRanking() {
+      const state = globalEloState();
+      const ranking = [...playerRegistry].sort((a, b) => (
+        (state.ratings[b.id] ?? initialEloRating) - (state.ratings[a.id] ?? initialEloRating)
+        || playerNickname(a).localeCompare(playerNickname(b), 'pl')
+      ));
+      eloRankingListEl.innerHTML = ranking.length
+        ? ranking.map((player, index) => `
+          <button class="elo-ranking-row" type="button" data-player-card="${escapeHtml(player.id)}">
+            <span class="elo-ranking-position">${index + 1}</span>
+            ${playerAvatarMarkup(player)}
+            <span class="elo-ranking-name">${escapeHtml(playerNickname(player))}</span>
+            <strong class="elo-ranking-value">${Math.round(state.ratings[player.id] ?? initialEloRating)}</strong>
+          </button>
+        `).join('')
+        : '<div class="launcher-empty">Nie ma jeszcze zawodników w rankingu.</div>';
+    }
+
+    function showEloRanking() {
+      renderEloRanking();
+      showLauncherSubview(launcherEloRankingEl);
+    }
+
+    function showLauncherSubview(viewElement) {
+      [launcherHomeEl, launcherCreateEl, launcherPlayersEl, launcherEloRankingEl, launcherPlayerDetailEl, launcherNewPlayerEl]
+        .forEach(element => element.classList.toggle('is-hidden', element !== viewElement));
+      window.scrollTo(0, 0);
+    }
+
+    function showPlayersPanel() {
+      playerProfileReturnView = 'players';
+      renderPlayerCards();
+      showLauncherSubview(launcherPlayersEl);
+    }
+
+    function openPlayerProfile(playerId, options = {}) {
+      const player = registryPlayer(playerId);
+      if (!player) return;
+      const preserveScroll = Boolean(options.preserveScroll);
+      const previousScrollY = preserveScroll && Number.isFinite(window.scrollY) ? window.scrollY : 0;
+      if (!options.preserveMatchLimit) playerProfileMatchLimit = 10;
+      activePlayerProfileId = playerId;
+      const stats = calculateGlobalPlayerStats(playerId);
+      const attributes = playerAttributes(playerId);
+      const cardTier = playerCardTier(attributes.overall);
+      const fullName = playerFullName(player);
+      const cardPortrait = player.photo
+        ? `<img src="${escapeHtml(player.photo)}" alt="">`
+        : escapeHtml(playerInitials(playerNickname(player)) || '?');
+      const visibleRecentMatches = stats.recent.slice(0, playerProfileMatchLimit);
+      const recentMarkup = visibleRecentMatches.length
+        ? visibleRecentMatches.map(match => `
+          <button
+            class="recent-match"
+            type="button"
+            data-open-history-match
+            data-history-tournament-id="${escapeHtml(match.tournamentId)}"
+            data-history-match-index="${match.matchIndex}">
+            <time class="recent-match-date">${formatPlayerMatchDate(match.timestamp)}</time>
+            <span class="recent-match-teams">
+              <span class="recent-match-team ${match.playerSide === 0 ? 'is-player-team' : ''}">${escapeHtml(match.homeTeam)}</span>
+              <span class="recent-match-team ${match.playerSide === 1 ? 'is-player-team' : ''}">${escapeHtml(match.awayTeam)}</span>
+            </span>
+            <span class="recent-match-scores">
+              <strong class="recent-match-score">${match.homeScore}</strong>
+              <strong class="recent-match-score">${match.awayScore}</strong>
+            </span>
+            <span class="result-badge ${match.outcome}">${match.outcome}</span>
+          </button>
+        `).join('')
+        : '<div class="launcher-empty">Ten zawodnik nie rozegrał jeszcze żadnego meczu.</div>';
+      const remainingMatches = Math.max(0, stats.recent.length - visibleRecentMatches.length);
+      const loadMoreMarkup = remainingMatches
+        ? `
+          <button
+            class="recent-match-more"
+            type="button"
+            data-load-more-player-matches="${escapeHtml(player.id)}">
+            Pokaż kolejne (${Math.min(10, remainingMatches)})
+          </button>
+        `
+        : '';
+      playerDetailEl.innerHTML = `
+        <section
+          class="fifa-attribute-card ${cardTier.className}"
+          aria-label="${cardTier.label} karta zawodnika: OVR ${attributes.overall}, ATT ${attributes.attack}, DEF ${attributes.defence}">
+          <div class="fifa-card-rating"><strong>${attributes.overall}</strong><span>OVR</span></div>
+          <div class="fifa-card-portrait ${player.photo ? 'has-photo' : ''}" aria-hidden="true">${cardPortrait}</div>
+          <div class="fifa-card-name">${escapeHtml(playerNickname(player))}</div>
+          <div class="fifa-card-stats">
+            <div class="fifa-card-stat"><strong>${attributes.attack}</strong><span>ATT</span></div>
+            <div class="fifa-card-stat"><strong>${attributes.defence}</strong><span>DEF</span></div>
+          </div>
+          <svg class="fifa-card-frame" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
+            <use class="fifa-card-frame-bevel-shadow" href="#player-card-outline"></use>
+            <use class="fifa-card-frame-bevel-highlight" href="#player-card-outline"></use>
+            <use
+              class="fifa-card-frame-stroke"
+              href="#player-card-outline"
+              transform="translate(4 4) scale(0.966403494 0.976744186)">
+            </use>
+          </svg>
+        </section>
+        <section class="player-profile-head">
+          ${playerAvatarMarkup(player, 'player-detail-avatar')}
+          <span class="player-profile-info">
+            <h3>${escapeHtml(playerNickname(player))}</h3>
+            <p>${fullName ? escapeHtml(fullName) : 'Imię i nazwisko nieuzupełnione'}</p>
+            <span class="player-profile-actions">
+              <button class="player-profile-action" type="button" data-edit-player="${player.id}">Edytuj dane</button>
+              ${stats.matches === 0 ? `<button class="player-profile-action is-danger" type="button" data-delete-player="${player.id}">Usuń</button>` : ''}
+            </span>
+          </span>
+        </section>
+        ${stats.matches > 0 ? '<p class="player-delete-note">Zawodnika z historią rozegranych meczów nie można usunąć.</p>' : ''}
+        <section class="player-stats-grid">
+          <div class="player-stat-card"><strong>${stats.matches}</strong><span>Rozegrane mecze</span></div>
+          <div class="player-stat-card"><strong>${stats.tournaments}</strong><span>Turnieje</span></div>
+          <div class="player-stat-card"><strong>${stats.wins}</strong><span>Wygrane</span></div>
+          <div class="player-stat-card"><strong>${stats.draws}</strong><span>Remisy</span></div>
+          <div class="player-stat-card"><strong>${stats.losses}</strong><span>Przegrane</span></div>
+        </section>
+        <h3 class="player-detail-section-title">Ostatnie rozegrane mecze</h3>
+        <div class="recent-match-list">${recentMarkup}</div>
+        ${loadMoreMarkup}
+      `;
+      showLauncherSubview(launcherPlayerDetailEl);
+      if (preserveScroll) {
+        window.requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
+      }
+    }
+
+    function openTournamentPlayerProfile(playerId, source) {
+      if (!registryPlayer(playerId) || !currentTournamentMeta) return;
+      const returnMatchIndex = source === 'match' ? activeMatchIndex : null;
+      if (source === 'match') {
+        savePausedMatchState();
+        stopTimer();
+        leaveBatteryMode();
+        releaseMatchWakeLock();
+      }
+      tournamentPlayerProfileReturnState = {
+        source,
+        matchIndex: returnMatchIndex,
+        scrollY: Number.isFinite(window.scrollY) ? window.scrollY : 0
+      };
+      playerProfileReturnView = 'tournament';
+      tournamentShellEl.classList.add('is-hidden');
+      launcherEl.classList.remove('is-hidden');
+      openPlayerProfile(playerId);
+    }
+
+    function returnToTournamentFromPlayerProfile() {
+      const returnState = tournamentPlayerProfileReturnState;
+      tournamentPlayerProfileReturnState = null;
+      launcherEl.classList.add('is-hidden');
+      tournamentShellEl.classList.remove('is-hidden');
+      if (returnState?.source === 'match' && Number.isInteger(returnState.matchIndex)) {
+        openMatch(returnState.matchIndex);
+      } else {
+        activeMatchIndex = null;
+        topbarEl.classList.remove('is-hidden');
+        setActiveScreen('table');
+        document.querySelectorAll('.tab').forEach(tab => (
+          tab.classList.toggle('is-active', tab.dataset.tab === 'table')
+        ));
+      }
+      window.scrollTo(0, returnState?.scrollY || 0);
+    }
+
+    function renderPlayerPhotoPreview() {
+      const fallbackPlayer = editingPlayerId ? registryPlayer(editingPlayerId) : null;
+      const initialsSource = newPlayerNicknameEl.value.trim() || playerNickname(fallbackPlayer) || '?';
+      playerPhotoPreviewEl.innerHTML = pendingPlayerPhoto
+        ? `<img src="${escapeHtml(pendingPlayerPhoto)}" alt="">`
+        : escapeHtml(playerInitials(initialsSource));
+      removePlayerPhotoEl.classList.toggle('is-hidden', !pendingPlayerPhoto);
+    }
+
+    function openPlayerForm(playerId = null) {
+      const player = playerId ? registryPlayer(playerId) : null;
+      editingPlayerId = player?.id || null;
+      pendingPlayerPhoto = player?.photo || '';
+      newPlayerFormEl.reset();
+      newPlayerFirstNameEl.value = player?.firstName || '';
+      newPlayerLastNameEl.value = player?.lastName || '';
+      newPlayerNicknameEl.value = playerNickname(player);
+      newPlayerPhotoEl.value = '';
+      playerFormTitleEl.textContent = player ? 'Edytuj zawodnika' : 'Nowy zawodnik';
+      playerFormSubmitEl.textContent = player ? 'Zapisz zmiany' : 'Utwórz zawodnika';
+      newPlayerErrorEl.textContent = '';
+      renderPlayerPhotoPreview();
+      showLauncherSubview(launcherNewPlayerEl);
+    }
+
+    function resizePlayerPhoto(file) {
+      return new Promise((resolve, reject) => {
+        if (!file?.type?.startsWith('image/')) {
+          reject(new Error('Wybierz plik graficzny JPG, PNG lub WEBP.'));
+          return;
+        }
+        if (file.size > 12 * 1024 * 1024) {
+          reject(new Error('Zdjęcie może mieć maksymalnie 12 MB.'));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Nie udało się odczytać zdjęcia.'));
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = () => reject(new Error('Nie udało się przetworzyć zdjęcia.'));
+          image.onload = () => {
+            const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+            const scale = Math.min(1, 420 / longestSide);
+            const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale));
+            const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight, 0, 0, targetWidth, targetHeight);
+            resolve(file.type === 'image/png'
+              ? canvas.toDataURL('image/png')
+              : canvas.toDataURL('image/jpeg', .84));
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function deletePlayer(playerId) {
+      const player = registryPlayer(playerId);
+      if (!player) return;
+      const stats = calculateGlobalPlayerStats(playerId);
+      if (stats.matches > 0) {
+        window.alert('Nie można usunąć zawodnika, który rozegrał co najmniej jeden mecz.');
+        return;
+      }
+      if (!window.confirm(`Czy na pewno usunąć zawodnika „${playerNickname(player)}”?`)) return;
+      playerRegistry = playerRegistry.filter(item => item.id !== playerId);
+      selectedNewTournamentPlayerIds.delete(playerId);
+      activePlayerProfileId = null;
+      savePlayerRegistry();
+      showPlayersPanel();
+    }
+
+    function renderNewPlayerFields(playerCount, autoFill = false) {
+      const selectedIds = [...selectedNewTournamentPlayerIds].filter(id => registryPlayer(id));
+      selectedNewTournamentPlayerIds = new Set(selectedIds.slice(0, playerCount));
+      if (autoFill) {
+        for (const player of playerRegistry) {
+          if (selectedNewTournamentPlayerIds.size >= playerCount) break;
+          selectedNewTournamentPlayerIds.add(player.id);
+        }
+      }
+      playerSelectionCountEl.textContent = `Wybrano ${selectedNewTournamentPlayerIds.size} z ${playerCount}`;
+      newPlayerListEl.innerHTML = playerRegistry.map(player => {
+        const isSelected = selectedNewTournamentPlayerIds.has(player.id);
+        return `
+          <button class="player-pick-card ${isSelected ? 'is-selected' : ''}" type="button" data-pick-player="${player.id}" aria-pressed="${isSelected}">
+            ${playerAvatarMarkup(player)}
+            <span class="player-card-name">${escapeHtml(playerNickname(player))}</span>
+            <span class="player-pick-check">✓</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function showTournamentCreator() {
+      showLauncherSubview(launcherCreateEl);
+      newTournamentNameEl.value = `Turniej ${formatTournamentDate(Date.now())}`;
+      createTournamentErrorEl.textContent = '';
+      newTournamentFormatEl.value = '6';
+      newTournamentDoubleLegsEl.checked = true;
+      selectedNewTournamentPlayerIds = new Set(playerRegistry.slice(0, 6).map(player => player.id));
+      renderNewPlayerFields(6);
+      updateNewTournamentFormatDescription();
+      window.scrollTo(0, 0);
+    }
+
+    function showTournamentLauncher() {
+      stopTimer();
+      leaveBatteryMode();
+      releaseMatchWakeLock();
+      activeMatchIndex = null;
+      currentTournamentMeta = null;
+      settingsPanelEl.classList.remove('is-visible');
+      settingsPanelEl.setAttribute('aria-hidden', 'true');
+      tournamentShellEl.classList.add('is-hidden');
+      launcherEl.classList.remove('is-hidden');
+      showLauncherSubview(launcherHomeEl);
+      renderTournamentLauncher();
+    }
+
+    function configureTournament(tournament) {
+      currentTournamentMeta = tournament;
+      assignTournamentStorageKeys(tournament.id);
+
+      const activePlayers = basePlayers.slice(0, tournament.format);
+      players.splice(0, players.length, ...activePlayers);
+      editablePlayers.splice(0, editablePlayers.length, ...activePlayers);
+      editablePlayerMap = Object.fromEntries(editablePlayers.map(player => [player.name, player]));
+      playerOrder = Object.fromEntries(players.map((player, index) => [player.name, index]));
+
+      settings = loadSettings();
+      if (tournament.format === 7 && settings.doubleLegs) {
+        settings.doubleLegs = false;
+        setStaminaStorageItem(settingsStorageKey, JSON.stringify(settings));
+      }
+      playerProfiles = loadPlayerProfiles();
+      tournament.playerIds?.forEach((playerId, index) => {
+        const linkedPlayer = registryPlayer(playerId);
+        const slot = basePlayers[index];
+        if (linkedPlayer && slot) {
+          playerProfiles[slot.name] = {
+            ...getPlayerProfile(slot.name),
+            name: playerNickname(linkedPlayer)
+          };
+        }
+      });
+      const serializedProfiles = JSON.stringify(playerProfiles);
+      if (localStorage.getItem(playerProfilesStorageKey) !== serializedProfiles) {
+        setStaminaStorageItem(playerProfilesStorageKey, serializedProfiles);
+      }
+      results = loadResults();
+      flagOrientations = loadFlagOrientations();
+      teamOrders = loadTeamOrders();
+      if (tournament.format === 7) {
+        let savedSeries = loadSevenPlayerSeries();
+        let savedPlan = loadSevenPlayerSeriesPlan();
+        if (!savedSeries.length) {
+          if (!savedPlan.length) savedPlan = createSevenPlayerSeriesPlan();
+          const firstChoice = chooseSeriesFromPlan(savedPlan, [], null, true);
+          savedSeries = [firstChoice.series];
+          savedPlan = firstChoice.remainingPlan;
+          saveSevenPlayerSeries(savedSeries);
+          saveSevenPlayerSeriesPlan(savedPlan);
+        } else if (!savedPlan.length && savedSeries.length < 10) {
+          const usedFixtures = new Set(savedSeries.flat().map(sevenPlayerFixtureKey));
+          savedPlan = createSevenPlayerSeriesPlan().filter(series => (
+            series.every(match => !usedFixtures.has(sevenPlayerFixtureKey(match)))
+          ));
+          saveSevenPlayerSeriesPlan(savedPlan);
+        }
+        firstRoundMatches = savedSeries.flat();
+      } else {
+        firstRoundMatches = buildBaseMatchesForFormat(tournament.format, players.map(player => player.name));
+      }
+      matches = buildMatches();
+      pausedMatchStates = {};
+      activeMatchIndex = null;
+      countdownRemaining = settings.countdownDuration;
+      matchRemaining = settings.matchDuration;
+      countdownEndTime = null;
+      matchEndTime = null;
+      lastMinuteSignalSecond = 0;
+      timerPhase = 'idle';
+
+      tournamentTitleEl.textContent = tournament.name;
+      tournamentShellEl.classList.toggle('is-five-format', tournament.format <= 5);
+      playerCountSettingEl.classList.add('is-hidden');
+      doubleLegsSettingEl.classList.toggle('is-hidden', tournament.format === 7);
+      formatSummarySettingEl.classList.remove('is-hidden');
+      const formatInfo = tournamentFormatInfo(tournament.format);
+      formatSummaryTextEl.textContent = `${formatInfo.short} • ${tournament.format} graczy • ${matches.length} meczów`;
+      finishTournamentButton.classList.toggle('is-hidden', Boolean(tournament.finishedAt));
+      restoreTournamentButton.classList.toggle('is-hidden', !tournament.finishedAt);
+      clearButton.disabled = Boolean(tournament.finishedAt);
+
+      document.querySelectorAll('.tab').forEach((tab, index) => tab.classList.toggle('is-active', index === 0));
+      topbarEl.classList.remove('is-hidden');
+      setActiveScreen('matches');
+      renderMatches();
+      renderAll();
+      launcherEl.classList.add('is-hidden');
+      tournamentShellEl.classList.remove('is-hidden');
+      window.scrollTo(0, 0);
+    }
+
+    function openTournament(tournamentId) {
+      const tournament = tournamentRegistry.find(item => item.id === tournamentId);
+      if (tournament) configureTournament(tournament);
+    }
+
+    function touchCurrentTournament() {
+      if (!currentTournamentMeta) return;
+      currentTournamentMeta.updatedAt = Date.now();
+      saveTournamentRegistry();
+    }
 
     function clampNumber(value, min, max, fallback) {
       const number = Number(value);
@@ -1681,9 +4950,15 @@
 
     function normalizeSettings(rawSettings = {}) {
       const matchSeconds = clampNumber(rawSettings.matchDuration, 60, 1800, 180);
+      const playerCount = currentTournamentMeta?.format || clampNumber(rawSettings.playerCount, 4, 7, 6);
+      const defaultDoubleLegs = playerCount === 6;
       return {
         matchDuration: Math.max(60, Math.min(1800, Math.round(matchSeconds / 60) * 60)),
-        countdownDuration: clampNumber(rawSettings.countdownDuration, 0, 60, 10)
+        countdownDuration: clampNumber(rawSettings.countdownDuration, 0, 60, 10),
+        playerCount,
+        doubleLegs: playerCount === 7
+          ? false
+          : typeof rawSettings.doubleLegs === 'boolean' ? rawSettings.doubleLegs : defaultDoubleLegs
       };
     }
 
@@ -1696,7 +4971,8 @@
     }
 
     function saveSettings() {
-      localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+      setStaminaStorageItem(settingsStorageKey, JSON.stringify(settings));
+      touchCurrentTournament();
     }
 
     function isHexColor(value) {
@@ -1745,18 +5021,21 @@
 
     function loadPlayerProfiles() {
       try {
-        const profiles = normalizePlayerProfiles(JSON.parse(localStorage.getItem(playerProfilesStorageKey)));
-        localStorage.setItem(playerProfilesStorageKey, JSON.stringify(profiles));
+        const rawProfiles = localStorage.getItem(playerProfilesStorageKey);
+        const profiles = normalizePlayerProfiles(JSON.parse(rawProfiles));
+        const serialized = JSON.stringify(profiles);
+        if (serialized !== rawProfiles) setStaminaStorageItem(playerProfilesStorageKey, serialized);
         return profiles;
       } catch {
         const profiles = normalizePlayerProfiles();
-        localStorage.setItem(playerProfilesStorageKey, JSON.stringify(profiles));
+        setStaminaStorageItem(playerProfilesStorageKey, JSON.stringify(profiles));
         return profiles;
       }
     }
 
     function savePlayerProfiles() {
-      localStorage.setItem(playerProfilesStorageKey, JSON.stringify(playerProfiles));
+      setStaminaStorageItem(playerProfilesStorageKey, JSON.stringify(playerProfiles));
+      touchCurrentTournament();
     }
 
     function getPlayerProfile(playerName) {
@@ -1798,8 +5077,7 @@
       settingsErrorEl.classList.remove('is-visible');
     }
 
-    function buildAllPossibleMatches() {
-      const playerNames = players.map(player => player.name);
+    function buildAllPossibleMatches(playerNames = players.map(player => player.name)) {
       const rawMatches = [];
 
       for (let lineupIndex = 0; lineupIndex < 3; lineupIndex += 1) {
@@ -1821,26 +5099,243 @@
         const homeCounts = Object.fromEntries(playerNames.map(name => [name, 0]));
         rawMatches.forEach((match, matchIndex) => {
           const homeTeamIndex = (orientationMask >> matchIndex) & 1;
-          match[homeTeamIndex].forEach(name => {
-            homeCounts[name] += 1;
-          });
+          match[homeTeamIndex].forEach(name => { homeCounts[name] += 1; });
         });
 
         if (playerNames.every(name => homeCounts[name] === targetHomeMatches)) {
-          return rawMatches.map((match, matchIndex) => {
-            const shouldSwapTeams = Boolean((orientationMask >> matchIndex) & 1);
-            return shouldSwapTeams
+          return rawMatches.map((match, matchIndex) => (
+            (orientationMask >> matchIndex) & 1
               ? [match[1], match[0], match[2]]
-              : [match[0], match[1], match[2]];
-          });
+              : [match[0], match[1], match[2]]
+          ));
         }
       }
 
       throw new Error('Nie udało się zbilansować stron gospodarzy i gości.');
     }
 
+    function combinations(items, size, startIndex = 0, prefix = [], output = []) {
+      if (prefix.length === size) {
+        output.push([...prefix]);
+        return output;
+      }
+      for (let index = startIndex; index < items.length; index += 1) {
+        combinations(items, size, index + 1, [...prefix, items[index]], output);
+      }
+      return output;
+    }
+
+    function buildFourPlayerMatches(playerNames) {
+      return [
+        [[playerNames[0], playerNames[1]], [playerNames[2], playerNames[3]]],
+        [[playerNames[0], playerNames[2]], [playerNames[1], playerNames[3]]],
+        [[playerNames[0], playerNames[3]], [playerNames[1], playerNames[2]]]
+      ];
+    }
+
+    function buildSevenPlayerMatches(playerNames) {
+      const rawMatches = [];
+      playerNames.forEach(benchPlayer => {
+        const activePlayers = playerNames.filter(name => name !== benchPlayer);
+        const anchorPlayer = activePlayers[0];
+        combinations(activePlayers.slice(1), 2).forEach(pair => {
+          const teamA = [anchorPlayer, ...pair];
+          const teamB = activePlayers.filter(name => !teamA.includes(name));
+          rawMatches.push([teamA, teamB, benchPlayer]);
+        });
+      });
+      return rawMatches;
+    }
+
+    function sevenPlayerFixtureKey(match) {
+      const teamKeys = [
+        [...match[0]].sort().join('|'),
+        [...match[1]].sort().join('|')
+      ].sort();
+      return `${match[2]}::${teamKeys.join('::')}`;
+    }
+
+    function shuffled(items) {
+      const copy = [...items];
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function loadSevenPlayerSeries() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(seriesStorageKey));
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveSevenPlayerSeries(series) {
+      setStaminaStorageItem(seriesStorageKey, JSON.stringify(series));
+      touchCurrentTournament();
+    }
+
+    function generateSevenPlayerSeries(existingSeries, matchHistory) {
+      const playerNames = players.map(player => player.name);
+      const universe = buildSevenPlayerMatches(playerNames);
+      const usedFixtures = new Set(existingSeries.flat().map(sevenPlayerFixtureKey));
+      const previousBench = existingSeries.length
+        ? existingSeries[existingSeries.length - 1][existingSeries[existingSeries.length - 1].length - 1][2]
+        : null;
+      let benchOrder = shuffled(playerNames);
+      if (previousBench && benchOrder[0] === previousBench) {
+        [benchOrder[0], benchOrder[1]] = [benchOrder[1], benchOrder[0]];
+      }
+
+      const candidateScore = new Map();
+      universe.forEach(match => {
+        if (usedFixtures.has(sevenPlayerFixtureKey(match))) return;
+        const prediction = calculateMatchProbabilities(match[0], match[1], matchHistory);
+        const strengthDifference = Math.abs(prediction.percentages.teamA - prediction.percentages.teamB);
+        candidateScore.set(sevenPlayerFixtureKey(match), (strengthDifference ** 2) + (Math.random() * .0001));
+      });
+
+      let states = [{
+        homeCounts: Object.fromEntries(playerNames.map(name => [name, 0])),
+        matches: [],
+        score: 0
+      }];
+
+      benchOrder.forEach((benchPlayer, benchIndex) => {
+        const candidates = universe.filter(match => (
+          match[2] === benchPlayer && !usedFixtures.has(sevenPlayerFixtureKey(match))
+        ));
+        const nextStates = new Map();
+        const remainingBenches = benchOrder.slice(benchIndex + 1);
+
+        states.forEach(state => {
+          candidates.forEach(candidate => {
+            [false, true].forEach(shouldSwap => {
+              const orientedMatch = shouldSwap
+                ? [candidate[1], candidate[0], candidate[2]]
+                : [candidate[0], candidate[1], candidate[2]];
+              const homeCounts = { ...state.homeCounts };
+              orientedMatch[0].forEach(name => { homeCounts[name] += 1; });
+              if (playerNames.some(name => homeCounts[name] > 3)) return;
+
+              const canStillReachBalance = playerNames.every(name => {
+                const remainingAppearances = remainingBenches.filter(bench => bench !== name).length;
+                return homeCounts[name] + remainingAppearances >= 3;
+              });
+              if (!canStillReachBalance) return;
+
+              const score = state.score + candidateScore.get(sevenPlayerFixtureKey(candidate));
+              const stateKey = playerNames.map(name => homeCounts[name]).join(',');
+              const existingState = nextStates.get(stateKey);
+              if (!existingState || score < existingState.score) {
+                nextStates.set(stateKey, {
+                  homeCounts,
+                  matches: [...state.matches, orientedMatch],
+                  score
+                });
+              }
+            });
+          });
+        });
+        states = [...nextStates.values()];
+      });
+
+      const balancedStates = states.filter(state => playerNames.every(name => state.homeCounts[name] === 3));
+      balancedStates.sort((a, b) => a.score - b.score);
+      if (!balancedStates.length) {
+        throw new Error('Nie udało się ułożyć kolejnej zbalansowanej serii bez powtórek.');
+      }
+      return balancedStates[0].matches;
+    }
+
+    const sevenPlayerPlanTemplate = [
+      [[6,5,0],[4,5,1],[1,0,1],[3,8,1],[2,6,0],[5,0,0],[0,3,1]],
+      [[1,1,0],[0,8,1],[6,2,0],[2,7,1],[4,1,1],[3,0,1],[5,1,0]],
+      [[0,1,0],[5,8,1],[6,8,0],[2,1,1],[3,7,1],[4,9,0],[1,4,0]],
+      [[4,3,1],[1,5,1],[2,3,0],[6,0,1],[3,5,0],[5,3,0],[0,4,0]],
+      [[6,7,1],[1,7,1],[2,0,1],[5,9,0],[4,4,0],[0,5,0],[3,1,0]],
+      [[1,9,1],[3,9,0],[0,7,1],[4,2,0],[5,4,1],[6,6,0],[2,9,1]],
+      [[0,0,0],[2,8,0],[1,3,1],[3,2,1],[6,3,0],[4,6,1],[5,6,0]],
+      [[0,6,1],[2,2,1],[6,1,0],[5,7,1],[1,2,0],[3,6,1],[4,8,0]],
+      [[6,4,0],[0,2,0],[3,3,1],[5,2,0],[1,6,0],[4,0,1],[2,5,1]],
+      [[3,4,0],[2,4,0],[0,9,0],[5,5,1],[4,7,1],[1,8,1],[6,9,0]]
+    ];
+
+    function createSevenPlayerSeriesPlan() {
+      const mappedPlayers = shuffled(players.map(player => player.name));
+      const universe = buildSevenPlayerMatches(mappedPlayers);
+      const plannedSeries = sevenPlayerPlanTemplate.map(templateSeries => templateSeries.map(([benchIndex, candidateIndex, shouldSwap]) => {
+        const candidate = universe[(benchIndex * 10) + candidateIndex];
+        return shouldSwap
+          ? [candidate[1], candidate[0], candidate[2]]
+          : [candidate[0], candidate[1], candidate[2]];
+      }));
+      return shuffled(plannedSeries).map(series => shuffled(series));
+    }
+
+    function loadSevenPlayerSeriesPlan() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(seriesPlanStorageKey));
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveSevenPlayerSeriesPlan(plan) {
+      setStaminaStorageItem(seriesPlanStorageKey, JSON.stringify(plan));
+    }
+
+    function sevenPlayerSeriesStrengthScore(series, matchHistory) {
+      return series.reduce((total, match) => {
+        const prediction = calculateMatchProbabilities(match[0], match[1], matchHistory);
+        const difference = Math.abs(prediction.percentages.teamA - prediction.percentages.teamB);
+        return total + (difference ** 2);
+      }, 0);
+    }
+
+    function rotateSeriesAwayFromPreviousBench(series, previousBench) {
+      if (!previousBench || series[0][2] !== previousBench) return series;
+      const nextIndex = series.findIndex(match => match[2] !== previousBench);
+      return nextIndex > 0
+        ? [...series.slice(nextIndex), ...series.slice(0, nextIndex)]
+        : series;
+    }
+
+    function chooseSeriesFromPlan(plan, matchHistory, previousBench, chooseRandomly = false) {
+      if (!plan.length) return null;
+      const selectedIndex = chooseRandomly
+        ? Math.floor(Math.random() * plan.length)
+        : plan
+          .map((series, index) => ({ index, score: sevenPlayerSeriesStrengthScore(series, matchHistory) }))
+          .sort((a, b) => a.score - b.score)[0].index;
+      const selectedSeries = rotateSeriesAwayFromPreviousBench(plan[selectedIndex], previousBench);
+      return {
+        series: selectedSeries,
+        remainingPlan: plan.filter((_, index) => index !== selectedIndex)
+      };
+    }
+
+    function buildBaseMatchesForFormat(playerCount, playerNames) {
+      if (playerCount === 4) return buildFourPlayerMatches(playerNames);
+      if (playerCount === 5) return buildAllPossibleMatches(playerNames);
+      if (playerCount === 6) return classicFirstRoundMatches.map(match => match.map(team => [...team]));
+      if (playerCount === 7) return [];
+      return [];
+    }
+
     function buildMatches() {
-      return [...firstRoundMatches];
+      return settings.doubleLegs
+        ? [
+          ...firstRoundMatches,
+          ...firstRoundMatches.map(match => match[2]
+            ? [match[1], match[0], match[2]]
+            : [match[1], match[0]])
+        ]
+        : [...firstRoundMatches];
     }
 
     function loadResults() {
@@ -1853,7 +5348,10 @@
     }
 
     function saveResults() {
-      localStorage.setItem(storageKey, JSON.stringify(results));
+      setStaminaStorageItem(storageKey, JSON.stringify(results));
+      cachedGlobalEloState = null;
+      cachedPlayerAttributeState = null;
+      touchCurrentTournament();
     }
 
     function loadFlagOrientations() {
@@ -1866,7 +5364,7 @@
     }
 
     function saveFlagOrientations() {
-      localStorage.setItem(flagStorageKey, JSON.stringify(flagOrientations));
+      setStaminaStorageItem(flagStorageKey, JSON.stringify(flagOrientations));
     }
 
     function loadTeamOrders() {
@@ -1879,7 +5377,7 @@
     }
 
     function saveTeamOrders() {
-      localStorage.setItem(teamOrderStorageKey, JSON.stringify(teamOrders));
+      setStaminaStorageItem(teamOrderStorageKey, JSON.stringify(teamOrders));
     }
 
     function canonicalTeam(team) {
@@ -1952,14 +5450,18 @@
       const complete = isComplete(result);
       const team1Won = complete && result.team1 > result.team2;
       const team2Won = complete && result.team2 > result.team1;
-      const matchNumber = index + 1;
+      const isReturnLeg = index >= firstRoundMatches.length;
+      const roundLabel = isReturnLeg ? 'Rewanż' : 'Mecz';
+      const matchNumber = !isReturnLeg
+        ? index + 1
+        : index + 1 - firstRoundMatches.length;
       return `
         <article class="match" data-open-match="${index}" role="button" tabindex="0">
           <div class="match-result-row">
             <div class="match-meta">
-              <span>Mecz ${matchNumber}</span>
+              <span>${roundLabel} ${matchNumber}</span>
               <span class="match-meta-duration">${formatDurationLabel(settings.matchDuration)}</span>
-              <span class="match-meta-bench">Pauzuje: ${escapeHtml(displayPlayerName(match[2]))}</span>
+              ${match[2] ? `<span class="match-meta-bench">Pauzuje: ${escapeHtml(displayPlayerName(match[2]))}</span>` : ''}
               ${complete ? '<span class="match-meta-status">Zakończony</span>' : ''}
             </div>
             <div class="match-teams">
@@ -1992,11 +5494,43 @@
     }
 
     function renderMatches() {
-      matchesEl.innerHTML = [0, 1, 2].map(seriesIndex => {
-        const startIndex = seriesIndex * players.length;
-        const seriesMatches = matches.slice(startIndex, startIndex + players.length);
-        return roundMarkup(`Seria ${seriesIndex + 1} • każdy raz pauzuje`, startIndex, seriesMatches);
-      }).join('');
+      const format = currentTournamentMeta?.format || 6;
+      const baseMatchCount = firstRoundMatches.length;
+
+      function matchSetMarkup(startIndex, isReturnLeg) {
+        const setMatches = matches.slice(startIndex, startIndex + baseMatchCount);
+        const returnPrefix = isReturnLeg ? 'Rewanże • ' : '';
+
+        if (format === 5) {
+          return [0, 1, 2].map(seriesIndex => {
+            const seriesStart = seriesIndex * 5;
+            return roundMarkup(
+              `${returnPrefix}Seria ${seriesIndex + 1} • każdy raz pauzuje`,
+              startIndex + seriesStart,
+              setMatches.slice(seriesStart, seriesStart + 5)
+            );
+          }).join('');
+        }
+
+        if (format === 7) {
+          return Array.from({ length: Math.ceil(setMatches.length / 7) }, (_, seriesIndex) => {
+            const seriesStart = seriesIndex * 7;
+            return roundMarkup(
+              `${returnPrefix}Seria ${seriesIndex + 1} • każdy raz pauzuje`,
+              startIndex + seriesStart,
+              setMatches.slice(seriesStart, seriesStart + 7)
+            );
+          }).join('');
+        }
+
+        const title = format === 4
+          ? `${isReturnLeg ? 'Runda rewanżowa' : 'Wszystkie składy 2v2'}`
+          : `${isReturnLeg ? 'Runda rewanżowa' : 'Runda pierwsza'}`;
+        return roundMarkup(title, startIndex, setMatches);
+      }
+
+      matchesEl.innerHTML = matchSetMarkup(0, false)
+        + (settings.doubleLegs ? matchSetMarkup(baseMatchCount, true) : '');
     }
 
     function emptyStats(player) {
@@ -2015,6 +5549,37 @@
 
     function isComplete(result) {
       return Number.isInteger(result?.team1) && Number.isInteger(result?.team2);
+    }
+
+    function getFirstLegIndex(matchIndex) {
+      return settings.doubleLegs && matchIndex >= firstRoundMatches.length
+        ? matchIndex - firstRoundMatches.length
+        : null;
+    }
+
+    function firstLegResultText(matchIndex) {
+      const benchText = matches[matchIndex][2]
+        ? `Pauzuje: ${displayPlayerName(matches[matchIndex][2])}`
+        : '';
+      const firstLegIndex = getFirstLegIndex(matchIndex);
+      if (firstLegIndex === null) return benchText;
+      const result = results[firstLegIndex] || {};
+      if (!isComplete(result)) return [benchText, 'Pierwszy mecz: -:-'].filter(Boolean).join(' • ');
+
+      const firstLegMatch = matches[firstLegIndex];
+      const currentMatch = matches[matchIndex];
+      const currentTeam1WasFirstTeam1 = teamKey(currentMatch[0]) === teamKey(firstLegMatch[0]);
+      const currentTeam1Goals = currentTeam1WasFirstTeam1 ? result.team1 : result.team2;
+      const currentTeam2Goals = currentTeam1WasFirstTeam1 ? result.team2 : result.team1;
+
+      if (currentTeam1Goals === currentTeam2Goals) {
+        return [benchText, `Pierwszy mecz: remis ${currentTeam1Goals}:${currentTeam2Goals}`].filter(Boolean).join(' • ');
+      }
+
+      const winnerTeam = currentTeam1Goals > currentTeam2Goals ? currentMatch[0] : currentMatch[1];
+      const winnerGoals = Math.max(currentTeam1Goals, currentTeam2Goals);
+      const loserGoals = Math.min(currentTeam1Goals, currentTeam2Goals);
+      return [benchText, `Pierwszy mecz: ${winnerGoals}:${loserGoals} dla ${teamName(winnerTeam)}`].filter(Boolean).join(' • ');
     }
 
     function initialRatings() {
@@ -2089,6 +5654,14 @@
       return (eloProbability * (1 - pointSignalWeight)) + (pointProbability * pointSignalWeight);
     }
 
+    function globalEloOddsWeight(matchHistory) {
+      const completedMatches = matchHistory.filter(match => (
+        Number.isInteger(match.goalsA) && Number.isInteger(match.goalsB)
+      )).length;
+      return oddsEloFloorWeight
+        + ((oddsEloStartWeight - oddsEloFloorWeight) * Math.exp(-completedMatches / oddsEloDecayMatches));
+    }
+
     function normalizePercentages(probabilities) {
       const entries = Object.entries(probabilities);
       const rounded = Object.fromEntries(entries.map(([key, value]) => [key, Math.round(value * 100)]));
@@ -2159,8 +5732,8 @@
       const actualB = isDraw ? 0.5 : 1 - actualA;
       const goalDiff = Math.abs(matchResult.goalsA - matchResult.goalsB);
       const goalMultiplier = isDraw ? 1 : 1 + Math.log(goalDiff + 1) * 0.35;
-      const deltaA = eloKFactor * (actualA - expectedA) * goalMultiplier;
-      const deltaB = eloKFactor * (actualB - expectedB) * goalMultiplier;
+      const deltaA = dayEloKFactor * (actualA - expectedA) * goalMultiplier;
+      const deltaB = dayEloKFactor * (actualB - expectedB) * goalMultiplier;
 
       matchResult.teamA.forEach(playerName => {
         nextRatings[playerName] = (nextRatings[playerName] ?? initialEloRating) + deltaA;
@@ -2176,13 +5749,20 @@
       return matchHistory.reduce((ratings, matchResult) => updatePlayerRatings(matchResult, ratings), initialRatings());
     }
 
-    function calculateMatchProbabilities(teamA, teamB, matchHistory) {
-      const ratings = ratingsFromMatchHistory(matchHistory);
-      const teamARating = calculateTeamRating(teamA, ratings);
-      const teamBRating = calculateTeamRating(teamB, ratings);
-      const eloTeamAProbability = calculateWinProbability(teamARating, teamBRating);
+    function calculateMatchProbabilities(teamA, teamB, matchHistory, options = {}) {
+      const dayRatings = ratingsFromMatchHistory(matchHistory);
+      const dayTeamARating = calculateTeamRating(teamA, dayRatings);
+      const dayTeamBRating = calculateTeamRating(teamB, dayRatings);
+      const dayEloTeamAProbability = calculateWinProbability(dayTeamARating, dayTeamBRating);
       const pointTeamAProbability = calculatePointWinProbability(teamA, teamB, matchHistory);
-      const blendedTeamAProbability = blendWinProbabilities(eloTeamAProbability, pointTeamAProbability, matchHistory);
+      const dayFormTeamAProbability = blendWinProbabilities(dayEloTeamAProbability, pointTeamAProbability, matchHistory);
+      const globalRatings = options.globalRatings || globalEloState().ratings;
+      const teamARating = globalTeamElo(teamA, currentTournamentMeta, globalRatings);
+      const teamBRating = globalTeamElo(teamB, currentTournamentMeta, globalRatings);
+      const globalEloTeamAProbability = globalEloExpectedScore(teamARating, teamBRating);
+      const eloWeight = globalEloOddsWeight(matchHistory);
+      const blendedTeamAProbability = (globalEloTeamAProbability * eloWeight)
+        + (dayFormTeamAProbability * (1 - eloWeight));
       const noDrawProbabilities = sharpenProbabilities({
         teamA: blendedTeamAProbability,
         teamB: 1 - blendedTeamAProbability
@@ -2206,6 +5786,9 @@
         percentages,
         teamARating,
         teamBRating,
+        eloWeight,
+        globalEloTeamAProbability,
+        dayFormTeamAProbability,
         teamAPoints: teamPointStrengthFromHistory(teamA, matchHistory),
         teamBPoints: teamPointStrengthFromHistory(teamB, matchHistory)
       };
@@ -2268,22 +5851,94 @@
       });
     }
 
-    function teamStrength(team, matchIndex = matches.length) {
-      return teamPointStrengthFromHistory(team, matchResultHistoryUntil(matchIndex));
-    }
-
     function updateDetailStrengths() {
       if (activeMatchIndex === null) return;
       const match = matches[activeMatchIndex];
-      detailTeam1StrengthEl.textContent = `SIŁA: ${teamStrength(match[0], activeMatchIndex)}`;
-      detailTeam2StrengthEl.textContent = `SIŁA: ${teamStrength(match[1], activeMatchIndex)}`;
+      const ratings = globalEloRatingsBeforeMatch(currentTournamentMeta.id, activeMatchIndex);
+      detailTeam1StrengthEl.textContent = `ELO: ${Math.round(globalTeamElo(match[0], currentTournamentMeta, ratings))}`;
+      detailTeam2StrengthEl.textContent = `ELO: ${Math.round(globalTeamElo(match[1], currentTournamentMeta, ratings))}`;
+    }
+
+    function playerWinStreakBeforeMatch(canonicalName, matchIndex) {
+      let streak = 0;
+
+      for (let index = matchIndex - 1; index >= 0; index -= 1) {
+        const match = matches[index];
+        const result = results[index];
+        if (!match || !isComplete(result)) continue;
+
+        const side = match[0].includes(canonicalName)
+          ? 0
+          : match[1].includes(canonicalName)
+            ? 1
+            : -1;
+        if (side < 0) continue;
+
+        const won = side === 0
+          ? result.team1 > result.team2
+          : result.team2 > result.team1;
+        if (!won) break;
+
+        streak += 1;
+        if (streak >= 3) return streak;
+      }
+
+      return streak;
+    }
+
+    function matchTopFormMarkup(canonicalName) {
+      if (activeMatchIndex === null || playerWinStreakBeforeMatch(canonicalName, activeMatchIndex) < 3) {
+        return '';
+      }
+
+      return `
+        <span class="match-lineup-top-form" title="Top forma: co najmniej 3 wygrane z rzędu" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path
+              class="match-lineup-top-form-star"
+              d="M12 1.8l3.04 6.16 6.8.99-4.92 4.79 1.16 6.77L12 17.31l-6.08 3.2 1.16-6.77-4.92-4.79 6.8-.99L12 1.8z">
+            </path>
+            <circle class="match-lineup-top-form-glint" cx="8.3" cy="7.4" r="1.45"></circle>
+          </svg>
+        </span>
+      `;
+    }
+
+    function matchLineupPlayerMarkup(canonicalName, side) {
+      const playerId = tournamentPlayerId(currentTournamentMeta, canonicalName);
+      const player = registryPlayer(playerId);
+      const nickname = player ? playerNickname(player) : canonicalName;
+      const overall = player ? playerAttributes(player.id).overall : playerAttributeBaseScore;
+      const topFormMarkup = matchTopFormMarkup(canonicalName);
+      const avatar = player
+        ? playerAvatarMarkup(player, 'match-lineup-avatar', topFormMarkup)
+        : `<span class="match-lineup-avatar tier-avatar is-bronze">${escapeHtml(playerInitials(nickname))}${topFormMarkup}</span>`;
+      const nameMarkup = `<span class="match-lineup-name">${escapeHtml(nickname)}</span>`;
+      const overallMarkup = `<strong class="match-lineup-overall">${overall}</strong>`;
+      return `
+        <button
+          class="match-lineup-player"
+          type="button"
+          data-tournament-player-profile="${escapeHtml(playerId || '')}"
+          data-player-profile-source="match">
+          ${side === 'home'
+            ? `${overallMarkup}${avatar}${nameMarkup}`
+            : `${nameMarkup}${avatar}${overallMarkup}`}
+        </button>
+      `;
+    }
+
+    function renderMatchLineups(match) {
+      detailLineupTeam1El.innerHTML = match[0].map(name => matchLineupPlayerMarkup(name, 'home')).join('');
+      detailLineupTeam2El.innerHTML = match[1].map(name => matchLineupPlayerMarkup(name, 'away')).join('');
     }
 
     function updatePredictionPanel() {
       if (activeMatchIndex === null) return;
       const match = matches[activeMatchIndex];
       const history = matchResultHistoryUntil(activeMatchIndex);
-      const prediction = calculateMatchProbabilities(match[0], match[1], history);
+      const globalRatings = globalEloRatingsBeforeMatch(currentTournamentMeta.id, activeMatchIndex);
+      const prediction = calculateMatchProbabilities(match[0], match[1], history, { globalRatings });
 
       predictionTeamAEl.textContent = `${prediction.percentages.teamA}%`;
       predictionDrawEl.textContent = `${prediction.percentages.draw}%`;
@@ -2322,14 +5977,19 @@
       standingsEl.innerHTML = standings.map((player, index) => {
         const balance = player.goalsFor - player.goalsAgainst;
         const balanceLabel = balance > 0 ? `+${balance}` : String(balance);
+        const playerId = tournamentPlayerId(currentTournamentMeta, player.name);
         return `
           <tr>
             <td class="rank">${index + 1}</td>
             <td class="name-cell">
-              <span class="name">
-                <span class="swatch" style="background:${displayPlayerColor(player.name)}"></span>
-                <span>${escapeHtml(displayPlayerName(player.name))}</span>
-              </span>
+              <button
+                class="name standings-player-link"
+                type="button"
+                data-tournament-player-profile="${escapeHtml(playerId || '')}"
+                data-player-profile-source="table">
+                  <span class="swatch" style="background:${displayPlayerColor(player.name)}"></span>
+                  <span>${escapeHtml(displayPlayerName(player.name))}</span>
+              </button>
             </td>
             <td class="points">${player.points}</td>
             <td class="stat">${player.wins}</td>
@@ -2350,12 +6010,15 @@
     }
 
     function renderScheduleSummary() {
-      scheduleSummaryEl.textContent = `${matches.length} meczów • 6× gosp. / 6× gość • ${formatDurationLabel(settings.matchDuration)}`;
+      const returnLabel = settings.doubleLegs ? ' • rewanże' : '';
+      scheduleSummaryEl.textContent = `${matches.length} meczów${returnLabel} • ${formatDurationLabel(settings.matchDuration)}`;
     }
 
     function renderSettingsForm() {
       matchMinutesInput.value = String(settings.matchDuration / 60);
       countdownSecondsInput.value = String(settings.countdownDuration);
+      playerCountSelect.value = String(settings.playerCount);
+      doubleLegsInput.checked = settings.doubleLegs;
     }
 
     function playerProfileMarkup(player, index) {
@@ -2364,7 +6027,7 @@
         <article class="player-profile" data-player-profile="${escapeHtml(player.name)}">
           <div class="player-profile-top">
             <button class="profile-preview" type="button" data-color-toggle style="background:${profile.color}" aria-label="Wybierz kolor piłkarza ${index + 1}" aria-expanded="false"></button>
-            <input class="profile-name-input" type="text" value="${escapeHtml(profile.name)}" aria-label="Nazwa piłkarza ${index + 1}" maxlength="20">
+            <span class="profile-player-name">${escapeHtml(profile.name)}</span>
           </div>
           <div class="profile-colors" aria-label="Kolor piłkarza ${index + 1}">
             ${profileColorPalette.map(color => {
@@ -2402,7 +6065,7 @@
         detailTeam2FlagEl.innerHTML = teamFlagMarkup(match[1]);
         detailTeam1NameEl.textContent = teamName(match[0]);
         detailTeam2NameEl.textContent = teamName(match[1]);
-        firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(match[2])}`;
+        firstLegResultEl.textContent = firstLegResultText(activeMatchIndex);
       }
     }
 
@@ -2411,7 +6074,7 @@
       settingsMainViewEl.classList.toggle('is-active', !isEditor);
       playersEditorViewEl.classList.toggle('is-active', isEditor);
       settingsBackButton.classList.toggle('is-hidden', !isEditor);
-      settingsTitleEl.textContent = isEditor ? 'Edytuj Piłkarzy' : 'Ustawienia';
+      settingsTitleEl.textContent = isEditor ? 'Kolory zawodników' : 'Ustawienia';
       if (isEditor) renderPlayerEditor();
     }
 
@@ -2431,6 +6094,25 @@
       renderProgress();
       renderScheduleSummary();
       renderSettingsForm();
+      updateGenerateSeriesButton();
+    }
+
+    function updateGenerateSeriesButton() {
+      const isSeriesTournament = currentTournamentMeta?.format === 7;
+      const seriesCount = isSeriesTournament ? Math.floor(firstRoundMatches.length / 7) : 0;
+      const remainingPlanCount = isSeriesTournament ? loadSevenPlayerSeriesPlan().length : 0;
+      const isFinished = Boolean(currentTournamentMeta?.finishedAt);
+      generateNextSeriesButton.classList.toggle('is-hidden', !isSeriesTournament || isFinished || seriesCount >= 10 || !remainingPlanCount);
+      if (!isSeriesTournament || seriesCount >= 10 || !remainingPlanCount) return;
+
+      const lastSeriesStart = Math.max(0, firstRoundMatches.length - 7);
+      const lastSeriesComplete = firstRoundMatches
+        .slice(lastSeriesStart)
+        .every((match, offset) => isComplete(results[lastSeriesStart + offset]));
+      generateNextSeriesButton.disabled = !lastSeriesComplete;
+      generateNextSeriesButton.textContent = lastSeriesComplete
+        ? `Ułóż serię ${seriesCount + 1}`
+        : `Uzupełnij wyniki serii ${seriesCount}`;
     }
 
     function setActiveScreen(screenName) {
@@ -2626,8 +6308,9 @@
     }
 
     function setDetailInputsEnabled(isEnabled) {
-      detailTeam1ScoreEl.disabled = !isEnabled;
-      detailTeam2ScoreEl.disabled = !isEnabled;
+      const canEditResults = Boolean(isEnabled) && !currentTournamentMeta?.finishedAt;
+      detailTeam1ScoreEl.disabled = !canEditResults;
+      detailTeam2ScoreEl.disabled = !canEditResults;
     }
 
     function isActiveTimerPhase() {
@@ -2665,7 +6348,7 @@
     }
 
     function updateDetailResult(side, rawValue) {
-      if (activeMatchIndex === null) return;
+      if (activeMatchIndex === null || currentTournamentMeta?.finishedAt) return;
       const value = rawValue === '' ? null : Math.max(0, Math.min(99, Number(rawValue)));
       results[activeMatchIndex] = results[activeMatchIndex] || {};
 
@@ -2675,10 +6358,16 @@
         results[activeMatchIndex][side] = value;
       }
 
+      if (isComplete(results[activeMatchIndex])) {
+        results[activeMatchIndex].completedAt = results[activeMatchIndex].completedAt || Date.now();
+      } else {
+        delete results[activeMatchIndex].completedAt;
+      }
+
       saveResults();
       renderMatches();
       renderAll();
-      firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(matches[activeMatchIndex][2])}`;
+      firstLegResultEl.textContent = firstLegResultText(activeMatchIndex);
       updateDetailStrengths();
       updatePredictionPanel();
     }
@@ -2735,7 +6424,7 @@
     }
 
     function startMatchTimer() {
-      if (timerInterval || timerPhase === 'finished') return;
+      if (currentTournamentMeta?.finishedAt || timerInterval || timerPhase === 'finished') return;
       primeMatchSounds();
       requestMatchWakeLock();
       const isStartingNewMatch = timerPhase === 'idle';
@@ -2807,7 +6496,9 @@
       const match = matches[matchIndex];
       const result = results[matchIndex] || {};
       const isAlreadyComplete = isComplete(result);
+      const isTournamentFinished = Boolean(currentTournamentMeta?.finishedAt);
       const pausedState = pausedMatchStates[matchIndex];
+      detailScreenEl.classList.toggle('is-readonly-tournament', isTournamentFinished);
 
       stopTimer();
       leaveBatteryMode();
@@ -2825,16 +6516,19 @@
       detailTeam2NameEl.textContent = teamName(match[1]);
       detailTeam1ScoreEl.value = result.team1 ?? '';
       detailTeam2ScoreEl.value = result.team2 ?? '';
-      firstLegResultEl.textContent = `Pauzuje: ${displayPlayerName(match[2])}`;
-      firstLegResultEl.classList.add('is-visible');
+      firstLegResultEl.textContent = firstLegResultText(matchIndex);
+      firstLegResultEl.classList.toggle('is-visible', Boolean(match[2]) || getFirstLegIndex(matchIndex) !== null);
+      renderMatchLineups(match);
       updateDetailStrengths();
       updatePredictionPanel();
 
-      const timerLabel = isAlreadyComplete
-        ? 'Koniec meczu'
-        : pausedState
-          ? 'Pauza'
-          : 'Gotowy';
+      const timerLabel = isTournamentFinished && !isAlreadyComplete
+        ? 'Turniej zakończony'
+        : isAlreadyComplete
+          ? 'Koniec meczu'
+          : pausedState
+            ? 'Pauza'
+            : 'Gotowy';
       const timerDisplay = isAlreadyComplete
         ? '0:00'
         : pausedState?.phase === 'countdown'
@@ -2843,8 +6537,14 @@
             ? formatTime(matchRemaining)
             : formatTime(settings.matchDuration);
       setTimerText(timerLabel, timerDisplay);
-      startMatchButton.textContent = isAlreadyComplete ? 'Mecz zakończony' : pausedState ? 'Wznów mecz' : 'Start Mecz';
-      startMatchButton.disabled = isAlreadyComplete;
+      startMatchButton.textContent = isTournamentFinished
+        ? 'Turniej zakończony'
+        : isAlreadyComplete
+          ? 'Mecz zakończony'
+          : pausedState
+            ? 'Wznów mecz'
+            : 'Start Mecz';
+      startMatchButton.disabled = isAlreadyComplete || isTournamentFinished;
       backToMenuButton.classList.add('is-visible');
       updateBackButtonLabel();
       setDetailInputsEnabled(true);
@@ -2886,7 +6586,9 @@
     function applySettingsFromForm() {
       settings = normalizeSettings({
         matchDuration: Number(matchMinutesInput.value) * 60,
-        countdownDuration: Number(countdownSecondsInput.value)
+        countdownDuration: Number(countdownSecondsInput.value),
+        playerCount: Number(playerCountSelect.value),
+        doubleLegs: doubleLegsInput.checked
       });
       matches = buildMatches();
       pausedMatchStates = {};
@@ -2896,6 +6598,8 @@
       matchEndTime = null;
       lastMinuteSignalSecond = 0;
       saveSettings();
+      const formatInfo = tournamentFormatInfo(currentTournamentMeta?.format || settings.playerCount);
+      formatSummaryTextEl.textContent = `${formatInfo.short} • ${settings.playerCount} graczy • ${matches.length} meczów`;
       renderMatches();
       renderAll();
     }
@@ -2963,12 +6667,8 @@
     });
     matchMinutesInput.addEventListener('change', applySettingsFromForm);
     countdownSecondsInput.addEventListener('change', applySettingsFromForm);
-    playerEditorEl.addEventListener('input', event => {
-      const input = event.target.closest('.profile-name-input');
-      if (!input) return;
-      const profileEl = input.closest('[data-player-profile]');
-      updatePlayerProfile(profileEl.dataset.playerProfile, { name: input.value }, { renderEditor: false });
-    });
+    playerCountSelect.addEventListener('change', applySettingsFromForm);
+    doubleLegsInput.addEventListener('change', applySettingsFromForm);
     playerEditorEl.addEventListener('click', event => {
       const colorToggle = event.target.closest('[data-color-toggle]');
       if (colorToggle) {
@@ -2993,11 +6693,44 @@
     });
 
     clearButton.addEventListener('click', () => {
+      if (currentTournamentMeta?.finishedAt) return;
       results = [];
       pausedMatchStates = {};
       saveResults();
       renderMatches();
       renderAll();
+    });
+
+    generateNextSeriesButton.addEventListener('click', () => {
+      if (currentTournamentMeta?.format !== 7) return;
+      const existingSeries = loadSevenPlayerSeries();
+      const existingPlan = loadSevenPlayerSeriesPlan();
+      if (existingSeries.length >= 10 || !existingPlan.length) return;
+      const lastSeriesStart = Math.max(0, firstRoundMatches.length - 7);
+      const lastSeriesComplete = firstRoundMatches
+        .slice(lastSeriesStart)
+        .every((match, offset) => isComplete(results[lastSeriesStart + offset]));
+      if (!lastSeriesComplete) {
+        window.alert('Najpierw uzupełnij wszystkie wyniki bieżącej serii.');
+        return;
+      }
+
+      try {
+        const history = matchResultHistoryUntil(matches.length);
+        const previousBench = existingSeries[existingSeries.length - 1][6][2];
+        const choice = chooseSeriesFromPlan(existingPlan, history, previousBench);
+        const updatedSeries = [...existingSeries, choice.series];
+        saveSevenPlayerSeries(updatedSeries);
+        saveSevenPlayerSeriesPlan(choice.remainingPlan);
+        firstRoundMatches = updatedSeries.flat();
+        matches = buildMatches();
+        renderMatches();
+        renderAll();
+        formatSummaryTextEl.textContent = `3v3 • 7 graczy • ${matches.length} meczów`;
+        window.scrollTo(0, document.body.scrollHeight);
+      } catch (error) {
+        window.alert(error.message || 'Nie udało się ułożyć kolejnej serii.');
+      }
     });
 
     document.querySelectorAll('.tab').forEach(tab => {
@@ -3011,8 +6744,267 @@
       });
     });
 
-    renderMatches();
-    renderAll();
+    tournamentShellEl.addEventListener('click', event => {
+      const playerTrigger = event.target.closest('[data-tournament-player-profile]');
+      if (!playerTrigger) return;
+      const playerId = playerTrigger.dataset.tournamentPlayerProfile;
+      if (!playerId) return;
+      openTournamentPlayerProfile(playerId, playerTrigger.dataset.playerProfileSource);
+    });
+
+    document.querySelector('#create-tournament-open').addEventListener('click', showTournamentCreator);
+    document.querySelector('#create-tournament-back').addEventListener('click', () => {
+      showLauncherSubview(launcherHomeEl);
+    });
+    document.querySelector('#players-open').addEventListener('click', showPlayersPanel);
+    document.querySelector('#players-back').addEventListener('click', () => showLauncherSubview(launcherHomeEl));
+    document.querySelector('#elo-ranking-open').addEventListener('click', showEloRanking);
+    document.querySelector('#elo-ranking-back').addEventListener('click', showPlayersPanel);
+    document.querySelector('#player-detail-back').addEventListener('click', () => {
+      if (playerProfileReturnView === 'tournament') returnToTournamentFromPlayerProfile();
+      else if (playerProfileReturnView === 'ranking') showEloRanking();
+      else showPlayersPanel();
+    });
+    document.querySelector('#new-player-open').addEventListener('click', () => openPlayerForm());
+    document.querySelector('#new-player-back').addEventListener('click', () => {
+      const playerId = editingPlayerId;
+      editingPlayerId = null;
+      if (playerId && registryPlayer(playerId)) openPlayerProfile(playerId);
+      else showPlayersPanel();
+    });
+    newTournamentFormatEl.addEventListener('change', () => {
+      renderNewPlayerFields(Number(newTournamentFormatEl.value), true);
+      updateNewTournamentFormatDescription({ resetReturns: true });
+    });
+    newTournamentDoubleLegsEl.addEventListener('change', () => updateNewTournamentFormatDescription());
+    document.querySelector('#tournaments-home').addEventListener('click', showTournamentLauncher);
+
+    launcherEl.addEventListener('click', event => {
+      const deleteTournamentButton = event.target.closest('[data-delete-tournament-id]');
+      if (deleteTournamentButton) {
+        deleteTournament(deleteTournamentButton.dataset.deleteTournamentId);
+        return;
+      }
+      const loadMorePlayerMatchesButton = event.target.closest('[data-load-more-player-matches]');
+      if (loadMorePlayerMatchesButton) {
+        playerProfileMatchLimit += 10;
+        openPlayerProfile(loadMorePlayerMatchesButton.dataset.loadMorePlayerMatches, {
+          preserveMatchLimit: true,
+          preserveScroll: true
+        });
+        return;
+      }
+      const historyMatch = event.target.closest('[data-open-history-match]');
+      if (historyMatch) {
+        const tournament = tournamentRegistry.find(item => item.id === historyMatch.dataset.historyTournamentId);
+        const matchIndex = Number(historyMatch.dataset.historyMatchIndex);
+        if (tournament && Number.isInteger(matchIndex)) {
+          configureTournament(tournament);
+          if (matches[matchIndex]) openMatch(matchIndex);
+        }
+        return;
+      }
+      const tournamentCard = event.target.closest('[data-tournament-id]');
+      if (tournamentCard) openTournament(tournamentCard.dataset.tournamentId);
+      const playerCard = event.target.closest('[data-player-card]');
+      if (playerCard) {
+        playerProfileReturnView = launcherEloRankingEl.classList.contains('is-hidden') ? 'players' : 'ranking';
+        openPlayerProfile(playerCard.dataset.playerCard);
+      }
+      const editPlayerButton = event.target.closest('[data-edit-player]');
+      if (editPlayerButton) {
+        openPlayerForm(editPlayerButton.dataset.editPlayer);
+        return;
+      }
+      const deletePlayerButton = event.target.closest('[data-delete-player]');
+      if (deletePlayerButton) {
+        deletePlayer(deletePlayerButton.dataset.deletePlayer);
+        return;
+      }
+      const playerPicker = event.target.closest('[data-pick-player]');
+      if (playerPicker) {
+        const playerId = playerPicker.dataset.pickPlayer;
+        const requiredCount = Number(newTournamentFormatEl.value);
+        if (selectedNewTournamentPlayerIds.has(playerId)) {
+          selectedNewTournamentPlayerIds.delete(playerId);
+        } else if (selectedNewTournamentPlayerIds.size < requiredCount) {
+          selectedNewTournamentPlayerIds.add(playerId);
+          createTournamentErrorEl.textContent = '';
+        } else {
+          createTournamentErrorEl.textContent = `Możesz wybrać maksymalnie ${requiredCount} zawodników.`;
+        }
+        renderNewPlayerFields(requiredCount);
+      }
+    });
+
+    newPlayerNicknameEl.addEventListener('input', () => {
+      if (!pendingPlayerPhoto) renderPlayerPhotoPreview();
+    });
+
+    newPlayerPhotoEl.addEventListener('change', async () => {
+      const [file] = newPlayerPhotoEl.files || [];
+      if (!file) return;
+      newPlayerErrorEl.textContent = '';
+      try {
+        pendingPlayerPhoto = await resizePlayerPhoto(file);
+        renderPlayerPhotoPreview();
+      } catch (error) {
+        newPlayerPhotoEl.value = '';
+        newPlayerErrorEl.textContent = error.message || 'Nie udało się dodać zdjęcia.';
+      }
+    });
+
+    removePlayerPhotoEl.addEventListener('click', () => {
+      pendingPlayerPhoto = '';
+      newPlayerPhotoEl.value = '';
+      renderPlayerPhotoPreview();
+    });
+
+    newPlayerFormEl.addEventListener('submit', event => {
+      event.preventDefault();
+      const firstName = newPlayerFirstNameEl.value.trim();
+      const lastName = newPlayerLastNameEl.value.trim();
+      const nickname = newPlayerNicknameEl.value.trim();
+      if (!nickname) {
+        newPlayerErrorEl.textContent = 'Pseudonim jest obowiązkowy.';
+        return;
+      }
+      if (playerRegistry.some(player => (
+        player.id !== editingPlayerId
+        && playerNickname(player).toLocaleLowerCase('pl') === nickname.toLocaleLowerCase('pl')
+      ))) {
+        newPlayerErrorEl.textContent = 'Zawodnik o tym pseudonimie już istnieje.';
+        return;
+      }
+      let savedPlayer = editingPlayerId ? registryPlayer(editingPlayerId) : null;
+      if (savedPlayer) {
+        Object.assign(savedPlayer, { firstName, lastName, nickname, photo: pendingPlayerPhoto });
+      } else {
+        savedPlayer = createPlayerRecord({ firstName, lastName, nickname, photo: pendingPlayerPhoto });
+        playerRegistry.push(savedPlayer);
+      }
+      savePlayerRegistry();
+      newPlayerErrorEl.textContent = '';
+      editingPlayerId = null;
+      openPlayerProfile(savedPlayer.id);
+    });
+
+    createTournamentFormEl.addEventListener('submit', event => {
+      event.preventDefault();
+      const format = Number(newTournamentFormatEl.value);
+      const tournamentName = newTournamentNameEl.value.trim();
+      const selectedPlayers = [...selectedNewTournamentPlayerIds].map(registryPlayer).filter(Boolean);
+
+      if (!tournamentName) {
+        createTournamentErrorEl.textContent = 'Podaj nazwę turnieju.';
+        return;
+      }
+      if (selectedPlayers.length !== format) {
+        createTournamentErrorEl.textContent = `Wybierz dokładnie ${format} zawodników.`;
+        return;
+      }
+
+      const tournamentId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const now = Date.now();
+      const tournament = {
+        id: tournamentId,
+        name: tournamentName,
+        format,
+        playerIds: selectedPlayers.map(player => player.id),
+        createdAt: now,
+        updatedAt: now,
+        finishedAt: null
+      };
+      const prefix = tournamentStoragePrefix(tournamentId);
+      const profiles = Object.fromEntries(basePlayers.slice(0, format).map((slot, index) => [slot.name, {
+        name: playerNickname(selectedPlayers[index]),
+        color: slot.color
+      }]));
+      setStaminaStorageItem(`${prefix}-results`, '[]');
+      setStaminaStorageItem(`${prefix}-flags`, '{}');
+      setStaminaStorageItem(`${prefix}-team-orders`, '{}');
+      setStaminaStorageItem(`${prefix}-series`, '[]');
+      setStaminaStorageItem(`${prefix}-series-plan`, '[]');
+      setStaminaStorageItem(`${prefix}-settings`, JSON.stringify({
+        matchDuration: 180,
+        countdownDuration: 10,
+        playerCount: format,
+        doubleLegs: newTournamentDoubleLegsEl.checked
+      }));
+      setStaminaStorageItem(`${prefix}-player-profiles`, JSON.stringify(profiles));
+      tournamentRegistry.push(tournament);
+      saveTournamentRegistry();
+      createTournamentErrorEl.textContent = '';
+      configureTournament(tournament);
+    });
+
+    finishTournamentButton.addEventListener('click', () => {
+      if (!currentTournamentMeta) return;
+      const complete = results.filter(isComplete).length;
+      const confirmation = complete < matches.length
+        ? `Zapisano ${complete} z ${matches.length} wyników. Mimo to zakończyć turniej?`
+        : 'Zakończyć turniej i przenieść go do archiwum?';
+      if (!window.confirm(confirmation)) return;
+      currentTournamentMeta.finishedAt = Date.now();
+      currentTournamentMeta.updatedAt = Date.now();
+      saveTournamentRegistry();
+      showTournamentLauncher();
+    });
+
+    restoreTournamentButton.addEventListener('click', () => {
+      if (!currentTournamentMeta) return;
+      currentTournamentMeta.finishedAt = null;
+      currentTournamentMeta.updatedAt = Date.now();
+      saveTournamentRegistry();
+      clearButton.disabled = false;
+      finishTournamentButton.classList.remove('is-hidden');
+      restoreTournamentButton.classList.add('is-hidden');
+    });
+
+    renderNewPlayerFields(6, true);
+    updateNewTournamentFormatDescription();
+    renderTournamentLauncher();
+    if (storageLoadError) {
+      const notice = document.createElement('div');
+      notice.className = 'launcher-error';
+      notice.textContent = storageLoadError;
+      launcherHomeEl.querySelector('.launcher-content')?.prepend(notice);
+    }
+    })();
+  </script>
+  <script>
+    (() => {
+      const controls = [...document.querySelectorAll('[data-avatar-control]')];
+      const outputs = Object.fromEntries(
+        [...document.querySelectorAll('[data-avatar-output]')].map(output => [output.dataset.avatarOutput, output])
+      );
+      const rootStyle = document.documentElement.style;
+
+      function avatarPhotoClip(circleSize) {
+        const radius = circleSize / 2;
+        const points = ['-200% -200%', '200% -200%', '200% 50%'];
+        for (let angle = 0; angle <= 180; angle += 15) {
+          const radians = angle * Math.PI / 180;
+          const x = Math.round((50 + Math.cos(radians) * radius) * 100) / 100;
+          const y = Math.round((50 + Math.sin(radians) * radius) * 100) / 100;
+          points.push(`${x}% ${y}%`);
+        }
+        points.push('-200% 50%');
+        return `polygon(${points.join(', ')})`;
+      }
+
+      function applyAvatarTuning() {
+        const values = Object.fromEntries(controls.map(control => [control.dataset.avatarControl, Number(control.value)]));
+        rootStyle.setProperty('--avatar-photo-scale', values.photoScale / 100);
+        rootStyle.setProperty('--avatar-circle-size', `${values.circleSize}%`);
+        rootStyle.setProperty('--avatar-photo-clip', avatarPhotoClip(values.circleSize));
+        outputs.photoScale.value = `${values.photoScale}%`;
+        outputs.circleSize.value = `${values.circleSize}%`;
+      }
+
+      controls.forEach(control => control.addEventListener('input', applyAvatarTuning));
+      applyAvatarTuning();
+    })();
   </script>
 </body>
 </html>
