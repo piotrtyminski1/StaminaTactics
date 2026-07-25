@@ -2877,6 +2877,23 @@
       animation: match-top-form-glint 1.5s ease-in-out infinite;
     }
 
+    .match-lineup-low-form {
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      z-index: 5;
+      width: 17px;
+      height: 17px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      line-height: 1;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8));
+      transform-origin: center;
+      animation: match-low-form-poo 1.5s ease-in-out infinite;
+    }
+
     @keyframes match-top-form-star {
       0%, 100% { transform: scale(.9) rotate(-5deg); }
       45% { transform: scale(1.08) rotate(4deg); }
@@ -2889,9 +2906,15 @@
       72% { opacity: 0; transform: scale(.4); }
     }
 
+    @keyframes match-low-form-poo {
+      0%, 100% { transform: scale(.9); }
+      50% { transform: scale(1.1); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .match-lineup-top-form-star,
-      .match-lineup-top-form-glint { animation: none; }
+      .match-lineup-top-form-glint,
+      .match-lineup-low-form { animation: none; }
       .match-lineup-top-form-glint { opacity: 1; }
     }
 
@@ -6827,22 +6850,59 @@
       return streak;
     }
 
-    function matchTopFormMarkup(canonicalName) {
-      if (activeMatchIndex === null || playerWinStreakBeforeMatch(canonicalName, activeMatchIndex) < 3) {
+    function playerLossStreakBeforeMatch(canonicalName, matchIndex) {
+      let streak = 0;
+
+      for (let index = matchIndex - 1; index >= 0; index -= 1) {
+        const match = matches[index];
+        const result = results[index];
+        if (!match || !isComplete(result)) continue;
+
+        const side = match[0].includes(canonicalName)
+          ? 0
+          : match[1].includes(canonicalName)
+            ? 1
+            : -1;
+        if (side < 0) continue;
+
+        const lost = side === 0
+          ? result.team1 < result.team2
+          : result.team2 < result.team1;
+        if (!lost) break;
+
+        streak += 1;
+        if (streak >= 3) return streak;
+      }
+
+      return streak;
+    }
+
+    function matchFormIndicatorMarkup(canonicalName) {
+      if (activeMatchIndex === null) {
         return '';
       }
 
-      return `
-        <span class="match-lineup-top-form" title="Top forma: co najmniej 3 wygrane z rzędu" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path
-              class="match-lineup-top-form-star"
-              d="M12 1.8l3.04 6.16 6.8.99-4.92 4.79 1.16 6.77L12 17.31l-6.08 3.2 1.16-6.77-4.92-4.79 6.8-.99L12 1.8z">
-            </path>
-            <circle class="match-lineup-top-form-glint" cx="8.3" cy="7.4" r="1.45"></circle>
-          </svg>
-        </span>
-      `;
+      if (playerWinStreakBeforeMatch(canonicalName, activeMatchIndex) >= 3) {
+        return `
+          <span class="match-lineup-top-form" title="Top forma: co najmniej 3 wygrane z rzędu" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path
+                class="match-lineup-top-form-star"
+                d="M12 1.8l3.04 6.16 6.8.99-4.92 4.79 1.16 6.77L12 17.31l-6.08 3.2 1.16-6.77-4.92-4.79 6.8-.99L12 1.8z">
+              </path>
+              <circle class="match-lineup-top-form-glint" cx="8.3" cy="7.4" r="1.45"></circle>
+            </svg>
+          </span>
+        `;
+      }
+
+      if (playerLossStreakBeforeMatch(canonicalName, activeMatchIndex) >= 3) {
+        return `
+          <span class="match-lineup-low-form" title="Słaba forma: co najmniej 3 porażki z rzędu" aria-hidden="true">💩</span>
+        `;
+      }
+
+      return '';
     }
 
     function matchLineupPlayerMarkup(canonicalName, side, attributeState, overallSnapshot) {
@@ -6858,10 +6918,10 @@
         : Number.isFinite(historicalOverall)
           ? historicalOverall
           : playerAttributeBaseScore;
-      const topFormMarkup = matchTopFormMarkup(canonicalName);
+      const formIndicatorMarkup = matchFormIndicatorMarkup(canonicalName);
       const avatar = player
-        ? playerAvatarMarkup(player, 'match-lineup-avatar', topFormMarkup, overall)
-        : `<span class="match-lineup-avatar tier-avatar is-bronze">${avatarPhotoLayerMarkup()}${topFormMarkup}</span>`;
+        ? playerAvatarMarkup(player, 'match-lineup-avatar', formIndicatorMarkup, overall)
+        : `<span class="match-lineup-avatar tier-avatar is-bronze">${avatarPhotoLayerMarkup()}${formIndicatorMarkup}</span>`;
       const nameMarkup = `<span class="match-lineup-name">${escapeHtml(nickname)}</span>`;
       const overallMarkup = `<strong class="match-lineup-overall">${overall}</strong>`;
       return `
