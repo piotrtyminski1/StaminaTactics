@@ -204,6 +204,14 @@
       margin-top: 22px;
     }
 
+    .launcher-section.is-hidden {
+      display: none;
+    }
+
+    .launcher-section.is-hidden + .launcher-section {
+      margin-top: 0;
+    }
+
     .launcher-section-head {
       display: flex;
       align-items: center;
@@ -233,30 +241,8 @@
     .tournament-entry,
     .archive-entry {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 38px;
-      gap: 6px;
+      grid-template-columns: minmax(0, 1fr);
       align-items: stretch;
-    }
-
-    .tournament-delete {
-      width: 38px;
-      min-height: 38px;
-      border: 1px solid rgba(255, 74, 119, .25);
-      border-radius: 6px;
-      background: rgba(255, 41, 91, .08);
-      color: #ff7699;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .tournament-delete:active {
-      background: rgba(255, 41, 91, .2);
-    }
-
-    .tournament-delete:focus-visible {
-      outline: 2px solid var(--focus);
-      outline-offset: 1px;
     }
 
     .tournament-card {
@@ -361,10 +347,6 @@
       background: rgba(15, 45, 55, .34);
     }
 
-    .archive-entry .tournament-delete {
-      border-radius: 0;
-    }
-
     .archive-row:active {
       background: var(--panel-2);
     }
@@ -394,14 +376,6 @@
       font-size: 10px;
       line-height: 13px;
       font-weight: 800;
-    }
-
-    .archive-winner-color {
-      width: 13px;
-      height: 13px;
-      flex: none;
-      border: 1px solid rgba(255, 255, 255, .2);
-      border-radius: 3px;
     }
 
     .archive-winner-name {
@@ -726,7 +700,7 @@
       width: 100%;
       min-height: 66px;
       display: grid;
-      grid-template-columns: 40px minmax(0, 1fr) auto;
+      grid-template-columns: 30px 40px minmax(0, 1fr) auto;
       align-items: center;
       gap: 10px;
       padding: 10px 12px;
@@ -739,6 +713,16 @@
     }
 
     .player-card:nth-child(even) { background: rgba(15, 45, 55, .34); }
+
+    .player-card-overall {
+      color: var(--text);
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-size: 22px;
+      line-height: 26px;
+      font-weight: 350;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
 
     .player-avatar,
     .player-detail-avatar {
@@ -901,13 +885,6 @@
 
     .player-profile-action.is-danger { color: #ff7699; }
 
-    .player-delete-note {
-      margin: 8px 3px 0;
-      color: var(--muted-2);
-      font-size: 8px;
-      line-height: 12px;
-    }
-
     .fifa-card-stage {
       position: relative;
       width: min(238.12px, 76vw);
@@ -916,6 +893,25 @@
       margin: 18px auto 6px;
       overflow: visible;
       isolation: isolate;
+      transform-style: preserve-3d;
+      transform-origin: center center;
+    }
+
+    .fifa-card-stage.is-entering {
+      animation:
+        fifa-card-y-entry 1s cubic-bezier(.0001, 0, 0, 1) both,
+        fifa-card-opacity-entry .1s linear both;
+      will-change: transform, opacity;
+    }
+
+    @keyframes fifa-card-y-entry {
+      from { transform: perspective(900px) rotateY(-29deg); }
+      to { transform: perspective(900px) rotateY(0deg); }
+    }
+
+    @keyframes fifa-card-opacity-entry {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .fifa-card-glow {
@@ -1011,6 +1007,59 @@
       height: 100%;
       overflow: visible;
       pointer-events: none;
+    }
+
+    .fifa-card-shine {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .fifa-card-shine span {
+      position: absolute;
+      top: 0;
+      left: -36%;
+      width: 172%;
+      height: 92px;
+      opacity: 0;
+      background: #fff;
+      transform: translateY(-150%) rotate(-24deg);
+      transform-origin: center;
+      will-change: transform, opacity;
+    }
+
+    .fifa-card-stage.is-entering .fifa-card-shine span:first-child {
+      animation: fifa-card-shine-first .5s linear both;
+    }
+
+    .fifa-card-stage.is-entering .fifa-card-shine span:last-child {
+      animation: fifa-card-shine-second .4s .1s linear both;
+    }
+
+    @keyframes fifa-card-shine-first {
+      0% {
+        opacity: .1;
+        transform: translateY(-150%) rotate(-24deg);
+      }
+      99.9% { opacity: .1; }
+      100% {
+        opacity: 0;
+        transform: translateY(470%) rotate(-24deg);
+      }
+    }
+
+    @keyframes fifa-card-shine-second {
+      0% {
+        opacity: .1;
+        transform: translateY(-150%) rotate(-24deg);
+      }
+      99.9% { opacity: .1; }
+      100% {
+        opacity: 0;
+        transform: translateY(470%) rotate(-24deg);
+      }
     }
 
     .fifa-card-frame use {
@@ -1155,6 +1204,19 @@
 
     .fifa-card-portrait.has-photo { background: transparent; }
 
+    @media (prefers-reduced-motion: reduce) {
+      .fifa-card-stage.is-entering {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .fifa-card-stage.is-entering .fifa-card-shine span {
+        animation: none;
+        opacity: 0;
+      }
+    }
+
     .fifa-card-name {
       position: absolute;
       top: 192px;
@@ -1220,6 +1282,186 @@
 
     .player-stat-card strong { font-family: "Roboto Mono", monospace; font-size: 20px; line-height: 24px; }
     .player-stat-card span { color: var(--muted); font-size: 8px; line-height: 11px; font-weight: 800; text-transform: uppercase; }
+
+    .overall-history {
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .overall-history-head {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 8px 11px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .overall-history-head strong {
+      font-size: 10px;
+      line-height: 13px;
+      text-transform: uppercase;
+    }
+
+    .overall-history-chart {
+      position: relative;
+      height: 220px;
+      width: 100%;
+      cursor: crosshair;
+      touch-action: pan-y;
+      user-select: none;
+    }
+
+    .overall-history-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .overall-history-grid-line {
+      stroke: rgba(157, 180, 187, .14);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .overall-history-grid-label {
+      fill: var(--muted-2);
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-size: 9px;
+      font-weight: 350;
+    }
+
+    .overall-history-tournament-band {
+      fill: rgba(0, 0, 0, .1);
+    }
+
+    .overall-history-tournament-boundary {
+      stroke: rgba(255, 255, 255, .05);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .overall-history-path {
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .overall-history-path.is-common { stroke: #778187; }
+    .overall-history-path.is-bronze { stroke: #d39a69; }
+    .overall-history-path.is-silver { stroke: #eef2f3; }
+    .overall-history-path.is-gold { stroke: #e1b84a; }
+
+    .overall-history-point {
+      --history-tier-color: #778187;
+      position: absolute;
+      z-index: 4;
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: 1px solid var(--bg);
+      border-radius: 50%;
+      background: var(--history-tier-color);
+      box-shadow: none;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+    }
+
+    .overall-history-point.is-common { --history-tier-color: #778187; }
+    .overall-history-point.is-bronze { --history-tier-color: #d39a69; }
+    .overall-history-point.is-silver { --history-tier-color: #eef2f3; }
+    .overall-history-point.is-gold { --history-tier-color: #e1b84a; }
+
+    .overall-history-point:focus-visible {
+      outline: none;
+      filter: brightness(1.35);
+    }
+
+    .overall-history-cursor-line {
+      position: absolute;
+      top: 20px;
+      bottom: 40px;
+      left: 0;
+      z-index: 2;
+      width: 1px;
+      background: rgba(255, 255, 255, .2);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    .overall-history-cursor-tooltip {
+      --history-cursor-y: 20px;
+      position: absolute;
+      top: var(--history-cursor-y);
+      left: 0;
+      z-index: 7;
+      width: max-content;
+      min-width: 64px;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #06171d;
+      color: var(--text);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .36);
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, calc(-100% - 11px));
+    }
+
+    .overall-history-cursor-tooltip strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text);
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 17px;
+      font-weight: 350;
+    }
+
+    .overall-history-result {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .overall-history-chart.is-inspecting .overall-history-cursor-line,
+    .overall-history-chart.is-inspecting .overall-history-cursor-tooltip {
+      opacity: 1;
+    }
+
+    .overall-history-cursor-tooltip.is-below {
+      transform: translate(-50%, 11px);
+    }
+
+    .overall-history-cursor-tooltip.is-left-edge {
+      transform: translate(0, calc(-100% - 11px));
+    }
+
+    .overall-history-cursor-tooltip.is-left-edge.is-below {
+      transform: translate(0, 11px);
+    }
+
+    .overall-history-cursor-tooltip.is-right-edge {
+      transform: translate(-100%, calc(-100% - 11px));
+    }
+
+    .overall-history-cursor-tooltip.is-right-edge.is-below {
+      transform: translate(-100%, 11px);
+    }
 
     .player-detail-section-title {
       margin: 20px 4px 8px;
@@ -1287,6 +1529,15 @@
     .result-badge.W { background: var(--green); }
     .result-badge.D { background: var(--draw); }
     .result-badge.L { background: var(--red); }
+
+    .overall-history-result .result-badge {
+      width: 11px;
+      height: 11px;
+      flex: 0 0 11px;
+      border-radius: 2px;
+      font-size: 6px;
+      line-height: 11px;
+    }
 
     .recent-match-date {
       color: var(--muted);
@@ -1594,6 +1845,15 @@
       grid-template-columns: minmax(0, 1fr) auto;
     }
 
+    .setting-row.name-row {
+      grid-template-columns: minmax(110px, .65fr) minmax(0, 1.35fr);
+    }
+
+    .setting-row.danger-row {
+      margin-top: 7px;
+      border-top: 1px solid rgba(255, 74, 119, .22);
+    }
+
     .setting-label {
       color: var(--text);
       font-size: 12px;
@@ -1645,6 +1905,13 @@
       box-shadow: 0 0 0 2px var(--accent-soft);
     }
 
+    .setting-name-input {
+      width: 100%;
+      padding: 0 10px;
+      font-size: 12px;
+      text-align: left;
+    }
+
     .setting-action {
       width: 100%;
       min-height: 34px;
@@ -1657,6 +1924,16 @@
       line-height: 13px;
       font-weight: 800;
       text-transform: uppercase;
+    }
+
+    .setting-action.is-danger {
+      border: 1px solid rgba(255, 74, 119, .28);
+      background: rgba(255, 41, 91, .08);
+      color: #ff7699;
+    }
+
+    .setting-action.is-danger:active {
+      background: rgba(255, 41, 91, .18);
     }
 
     .player-editor {
@@ -2190,8 +2467,45 @@
     }
 
     .detail-screen {
+      position: relative;
       min-height: 100dvh;
       background: var(--bg);
+    }
+
+    .match-sound-test {
+      position: absolute;
+      top: max(14px, env(safe-area-inset-top));
+      left: 8px;
+      z-index: 3;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .match-sound-test svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .match-sound-test:active {
+      background: #163b47;
+    }
+
+    .match-sound-test:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
     }
 
     .scoreboard {
@@ -2425,12 +2739,12 @@
     .match-lineup-player:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
     .match-lineup-team.is-home .match-lineup-player {
-      grid-template-columns: auto 34px minmax(0, 1fr);
+      grid-template-columns: 28px 34px minmax(0, 1fr);
       justify-items: start;
     }
 
     .match-lineup-team.is-away .match-lineup-player {
-      grid-template-columns: minmax(0, 1fr) 34px auto;
+      grid-template-columns: minmax(0, 1fr) 34px 28px;
       justify-items: end;
     }
 
@@ -2505,6 +2819,7 @@
     }
 
     .match-lineup-name {
+      width: 100%;
       min-width: 0;
       overflow: hidden;
       color: var(--text);
@@ -2518,12 +2833,14 @@
     .match-lineup-team.is-away .match-lineup-name { text-align: right; }
 
     .match-lineup-overall {
+      width: 28px;
       color: var(--text);
-      font-family: Audiowide, FS Numbers, LivesportFinderLatin, Arial, sans-serif;
-      font-size: 16px;
-      line-height: 20px;
+      font-family: Oswald, "Arial Narrow", Arial, sans-serif;
+      font-size: 19px;
+      line-height: 22px;
       font-variant-numeric: tabular-nums;
-      font-weight: 400;
+      font-weight: 350;
+      text-align: center;
       white-space: nowrap;
     }
 
@@ -2929,7 +3246,7 @@
           <button class="launcher-secondary" type="button" id="players-open">Zawodnicy</button>
         </header>
         <div class="launcher-content">
-          <section class="launcher-section">
+          <section class="launcher-section" id="active-tournaments-section">
             <div class="launcher-section-head"><h2>W toku</h2><span class="launcher-count" id="active-tournament-count">0</span></div>
             <div class="tournament-list" id="active-tournament-list"></div>
           </section>
@@ -3089,6 +3406,13 @@
           </div>
           <section class="settings-view is-active" id="settings-main-view">
             <form class="settings-form" id="settings-form">
+              <label class="setting-row name-row">
+                <span>
+                  <span class="setting-label">Nazwa turnieju</span>
+                  <span class="setting-hint">Zmiana zapisuje się automatycznie</span>
+                </span>
+                <input class="setting-input setting-name-input" id="setting-tournament-name" type="text" maxlength="40" autocomplete="off">
+              </label>
               <label class="setting-row">
                 <span>
                   <span class="setting-label">Czas gry</span>
@@ -3139,6 +3463,13 @@
                 </span>
                 <button class="setting-action" type="button" id="edit-players">Ustaw</button>
               </div>
+              <div class="setting-row danger-row">
+                <span>
+                  <span class="setting-label">Usuń turniej</span>
+                  <span class="setting-hint">Tej operacji nie można cofnąć</span>
+                </span>
+                <button class="setting-action is-danger" type="button" id="delete-tournament">Usuń</button>
+              </div>
             </form>
           </section>
           <section class="settings-view" id="players-editor-view">
@@ -3187,6 +3518,12 @@
       </section>
 
       <section class="screen detail-screen" id="detail-screen">
+        <button class="match-sound-test" type="button" id="test-match-sound" aria-label="Test dźwięku rozpoczęcia meczu">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+          </svg>
+        </button>
         <div class="scoreboard">
           <div class="scoreboard-team">
             <div class="flag-card" id="detail-team1-flag"></div>
@@ -3682,11 +4019,13 @@
     const settingsMainViewEl = document.querySelector('#settings-main-view');
     const playersEditorViewEl = document.querySelector('#players-editor-view');
     const settingsErrorEl = document.querySelector('#settings-error');
+    const tournamentNameInput = document.querySelector('#setting-tournament-name');
     const matchMinutesInput = document.querySelector('#setting-match-minutes');
     const countdownSecondsInput = document.querySelector('#setting-countdown-seconds');
     const playerCountSelect = document.querySelector('#setting-player-count');
     const doubleLegsInput = document.querySelector('#setting-double-legs');
     const editPlayersButton = document.querySelector('#edit-players');
+    const deleteTournamentButton = document.querySelector('#delete-tournament');
     const playerEditorEl = document.querySelector('#player-editor');
     const detailScreenEl = document.querySelector('#detail-screen');
     const detailTeam1FlagEl = document.querySelector('#detail-team1-flag');
@@ -3715,6 +4054,7 @@
     const pauseMatchButton = document.querySelector('#pause-match');
     const resetMatchButton = document.querySelector('#reset-match');
     const startMatchButton = document.querySelector('#start-match');
+    const testMatchSoundButton = document.querySelector('#test-match-sound');
     const backToMenuButton = document.querySelector('#back-to-menu');
     const enterBatteryModeButton = document.querySelector('#enter-battery-mode');
     const closeBatteryModeButton = document.querySelector('#close-battery-mode');
@@ -3730,6 +4070,7 @@
     const launcherNewPlayerEl = document.querySelector('#launcher-new-player');
     const tournamentShellEl = document.querySelector('#tournament-shell');
     const tournamentTitleEl = document.querySelector('#tournament-title');
+    const activeTournamentSectionEl = document.querySelector('#active-tournaments-section');
     const activeTournamentListEl = document.querySelector('#active-tournament-list');
     const archiveTournamentListEl = document.querySelector('#archive-tournament-list');
     const activeTournamentCountEl = document.querySelector('#active-tournament-count');
@@ -3967,7 +4308,6 @@
             <span class="tournament-progress"><span style="width:${percentage}%"></span></span>
             <span class="tournament-card-bottom"><span>${summary.complete}/${summary.total} wyników</span><span>${tournament.finishedAt ? 'Zakończony' : `${percentage}%`}</span></span>
           </button>
-          <button class="tournament-delete" type="button" data-delete-tournament-id="${escapeHtml(tournament.id)}" aria-label="Usuń turniej ${escapeHtml(tournament.name)}">✕</button>
         </div>
       `;
     }
@@ -4035,7 +4375,7 @@
         name: linkedWinner
           ? playerNickname(linkedWinner)
           : typeof profile.name === 'string' && profile.name.trim() ? profile.name.trim() : winner.name,
-        color: isHexColor(profile.color) ? profile.color : basePlayers[winner.order].color
+        player: linkedWinner
       };
     }
 
@@ -4048,11 +4388,10 @@
             <span class="archive-name">${escapeHtml(tournament.name)}</span>
             <span class="archive-format">${formatLabel}</span>
             <span class="archive-winner">
-              ${winner.color ? `<span class="archive-winner-color" style="background:${winner.color}"></span>` : ''}
+              ${winner.player ? playerAvatarMarkup(winner.player, 'player-avatar standings-avatar') : ''}
               <span class="archive-winner-name">${escapeHtml(winner.name)}</span>
             </span>
           </button>
-          <button class="tournament-delete" type="button" data-delete-tournament-id="${escapeHtml(tournament.id)}" aria-label="Usuń turniej ${escapeHtml(tournament.name)}">✕</button>
         </div>
       `;
     }
@@ -4067,9 +4406,10 @@
 
       activeTournamentCountEl.textContent = String(active.length);
       archiveTournamentCountEl.textContent = String(archived.length);
+      activeTournamentSectionEl.classList.toggle('is-hidden', active.length === 0);
       activeTournamentListEl.innerHTML = active.length
         ? active.map(tournamentCardMarkup).join('')
-        : '<div class="launcher-empty">Nie ma aktywnych turniejów.</div>';
+        : '';
       archiveTournamentListEl.innerHTML = archived.length
         ? archived.map(archiveRowMarkup).join('')
         : '<div class="launcher-empty">Zakończone turnieje pojawią się tutaj.</div>';
@@ -4089,7 +4429,11 @@
         .forEach(suffix => removeStaminaStorageItem(`${prefix}-${suffix}`));
       tournamentRegistry = tournamentRegistry.filter(item => item.id !== tournament.id);
       saveTournamentRegistry();
-      renderTournamentLauncher();
+      if (currentTournamentMeta?.id === tournament.id) {
+        showTournamentLauncher();
+      } else {
+        renderTournamentLauncher();
+      }
     }
 
     function playerInitials(name) {
@@ -4542,6 +4886,52 @@
       return historicalState;
     }
 
+    function playerAttributeStateAfterMatch(tournamentId, matchIndex) {
+      const events = completedGlobalEloEvents();
+      const targetEventIndex = events.findIndex(event => (
+        event.key === globalEloMatchKey(tournamentId, matchIndex)
+      ));
+      if (targetEventIndex < 0 || targetEventIndex === events.length - 1) {
+        return playerAttributeState();
+      }
+      const nextEvent = events[targetEventIndex + 1];
+      return playerAttributeStateBeforeMatch(nextEvent.tournamentId, nextEvent.matchIndex);
+    }
+
+    function currentPlayerOverallSnapshot(playerIds) {
+      return Object.fromEntries((playerIds || []).map(playerId => [
+        playerId,
+        playerAttributes(playerId).overall
+      ]));
+    }
+
+    function finishedTournamentOverallSnapshot(tournament) {
+      if (!tournament?.finishedAt) return null;
+      const playerIds = (tournament.playerIds || []).filter(Boolean);
+      const savedSnapshot = tournament.finishedCardOverallSnapshot;
+      const hasCompleteSnapshot = savedSnapshot
+        && typeof savedSnapshot === 'object'
+        && playerIds.every(playerId => Number.isFinite(Number(savedSnapshot[playerId])));
+      if (hasCompleteSnapshot) return savedSnapshot;
+
+      const eventsAtFinish = completedGlobalEloEvents().filter(event => (
+        Number.isFinite(event.timestamp) && event.timestamp <= tournament.finishedAt
+      ));
+      const lastEvent = eventsAtFinish[eventsAtFinish.length - 1];
+      const ratingsAtFinish = lastEvent
+        ? globalEloState().transactions.get(lastEvent.key)?.ratingsAfter || {}
+        : {};
+      const historicalState = buildPlayerAttributeState(eventsAtFinish, ratingsAtFinish);
+      const reconstructedSnapshot = Object.fromEntries(playerIds.map(playerId => [
+        playerId,
+        historicalState.byPlayer[playerId]?.overall ?? playerAttributeBaseScore
+      ]));
+
+      tournament.finishedCardOverallSnapshot = reconstructedSnapshot;
+      saveTournamentRegistry();
+      return reconstructedSnapshot;
+    }
+
     function playerCardTier(overall) {
       if (overall <= 60) return { className: 'is-common', label: 'zwykła szara' };
       if (overall <= 75) return { className: 'is-bronze', label: 'brązowa' };
@@ -4593,6 +4983,7 @@
           if (outcome === 'W') stats.wins += 1;
           else if (outcome === 'D') stats.draws += 1;
           else stats.losses += 1;
+          const snapshottedOverall = Number(result.overallSnapshot?.[playerId]);
           stats.recent.push({
             tournamentId: tournament.id,
             tournamentOrder,
@@ -4604,6 +4995,7 @@
             homeScore: result.team1,
             awayScore: result.team2,
             playerSide: side,
+            overall: Number.isFinite(snapshottedOverall) ? snapshottedOverall : null,
             timestamp: result.completedAt || tournament.finishedAt || tournament.updatedAt || tournament.createdAt
           });
         });
@@ -4642,16 +5034,307 @@
       }).format(new Date(timestamp));
     }
 
-    function playerCardMarkup(player) {
+    function polishTournamentNoun(count) {
+      const absoluteCount = Math.abs(Number(count)) || 0;
+      if (absoluteCount === 1) return 'turniej';
+      const lastTwoDigits = absoluteCount % 100;
+      const lastDigit = absoluteCount % 10;
+      return lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)
+        ? 'turnieje'
+        : 'turniejów';
+    }
+
+    function playerOverallHistoryMarkup(playerId, stats) {
+      if (!stats.recent.length) return '';
+
+      const history = [...stats.recent]
+        .sort((a, b) => (
+          a.timestamp - b.timestamp
+          || a.tournamentTimestamp - b.tournamentTimestamp
+          || a.tournamentOrder - b.tournamentOrder
+          || a.matchIndex - b.matchIndex
+        ))
+        .map(match => {
+          let overall = Number(
+            playerAttributeStateAfterMatch(match.tournamentId, match.matchIndex)
+              .byPlayer[playerId]?.overall
+          );
+          if (!Number.isFinite(overall)) overall = playerAttributeBaseScore;
+          return { ...match, overall: Math.round(clamp(overall, 40, 99)) };
+        });
+      history[history.length - 1].overall = playerAttributes(playerId).overall;
+
+      const chartHeight = 220;
+      const plotTop = 20;
+      const plotBottom = 180;
+      const plotLeft = 34;
+      const plotRight = 16;
+      const chartWidth = 360;
+      const step = history.length > 1
+        ? (chartWidth - plotLeft - plotRight) / (history.length - 1)
+        : 0;
+      const historyOveralls = history.map(match => match.overall);
+      const minimumOverall = Math.min(...historyOveralls);
+      const maximumOverall = Math.max(...historyOveralls);
+      const overallRange = maximumOverall - minimumOverall;
+      const rawGridStep = overallRange > 0 ? overallRange / 5 : 5;
+      const gridStepOptions = [1, 2, 5, 10, 20];
+      const gridStep = gridStepOptions.reduce((nearest, option) => (
+        Math.abs(option - rawGridStep) < Math.abs(nearest - rawGridStep) ? option : nearest
+      ), gridStepOptions[0]);
+      let chartMinimum = Math.max(40, Math.floor(minimumOverall / gridStep) * gridStep);
+      let chartMaximum = Math.min(99, Math.ceil(maximumOverall / gridStep) * gridStep);
+      if (chartMinimum === minimumOverall && chartMinimum > 40) {
+        chartMinimum = Math.max(40, chartMinimum - gridStep);
+      }
+      if (chartMaximum === maximumOverall && chartMaximum < 99) {
+        chartMaximum = Math.min(99, chartMaximum + gridStep);
+      }
+      if (chartMaximum === chartMinimum) {
+        chartMinimum = Math.max(40, chartMinimum - 5);
+        chartMaximum = Math.min(99, chartMaximum + 5);
+      }
+      const yForOverall = overall => (
+        plotTop
+        + ((chartMaximum - overall) / (chartMaximum - chartMinimum))
+        * (plotBottom - plotTop)
+      );
+      const gridLevels = [];
+      for (let level = chartMaximum; level >= chartMinimum; level -= gridStep) {
+        gridLevels.push(level);
+      }
+      if (gridLevels[gridLevels.length - 1] !== chartMinimum) {
+        gridLevels.push(chartMinimum);
+      }
+      let previousTier = null;
+
+      const points = history.map((match, index) => {
+        const x = history.length === 1 ? chartWidth / 2 : plotLeft + index * step;
+        const xPercent = (x / chartWidth) * 100;
+        const y = yForOverall(match.overall);
+        const tier = playerCardTier(match.overall).className;
+        const isTransition = index > 0 && tier !== previousTier;
+        const playerScore = match.playerSide === 1 ? match.awayScore : match.homeScore;
+        const opponentScore = match.playerSide === 1 ? match.homeScore : match.awayScore;
+        previousTier = tier;
+        return {
+          x,
+          xPercent,
+          y,
+          overall: match.overall,
+          score: `${playerScore}:${opponentScore}`,
+          outcome: match.outcome,
+          tier,
+          isTransition,
+          index,
+          tournamentId: match.tournamentId
+        };
+      });
+      const tournamentRanges = [];
+      points.forEach((point, index) => {
+        const currentRange = tournamentRanges[tournamentRanges.length - 1];
+        if (!currentRange || currentRange.tournamentId !== point.tournamentId) {
+          tournamentRanges.push({
+            tournamentId: point.tournamentId,
+            firstIndex: index,
+            lastIndex: index
+          });
+        } else {
+          currentRange.lastIndex = index;
+        }
+      });
+      tournamentRanges.forEach((range, index) => {
+        const firstPoint = points[range.firstIndex];
+        const lastPoint = points[range.lastIndex];
+        const previousPoint = points[range.firstIndex - 1];
+        const nextPoint = points[range.lastIndex + 1];
+        range.startX = previousPoint
+          ? (previousPoint.x + firstPoint.x) / 2
+          : plotLeft;
+        range.endX = nextPoint
+          ? (lastPoint.x + nextPoint.x) / 2
+          : chartWidth - plotRight;
+        range.isShaded = index % 2 === 0;
+      });
+      const historyData = points.map(({ xPercent, y, overall, score, outcome }) => ({
+        xPercent,
+        y,
+        overall,
+        score,
+        outcome
+      }));
+
+      return `
+        <section class="overall-history" aria-label="Historia OVR zawodnika">
+          <div class="overall-history-head">
+            <strong>Historia OVR</strong>
+          </div>
+          <div
+            class="overall-history-chart"
+            data-overall-history-chart
+            data-overall-history-points="${escapeHtml(JSON.stringify(historyData))}"
+            tabindex="0"
+            aria-label="Wykres historii OVR. Przesuń wskaźnik, aby sprawdzić wynik meczu.">
+            <svg
+              class="overall-history-svg"
+              viewBox="0 0 ${chartWidth} ${chartHeight}"
+              preserveAspectRatio="none"
+              aria-hidden="true">
+              ${tournamentRanges.filter(range => range.isShaded).map(range => `
+                <rect
+                  class="overall-history-tournament-band"
+                  x="${range.startX}"
+                  y="${plotTop}"
+                  width="${range.endX - range.startX}"
+                  height="${plotBottom - plotTop}">
+                </rect>
+              `).join('')}
+              ${gridLevels.map(level => {
+                const y = yForOverall(level);
+                return `
+                  <line class="overall-history-grid-line" x1="${plotLeft}" y1="${y}" x2="${chartWidth - plotRight}" y2="${y}"></line>
+                  <text class="overall-history-grid-label" x="7" y="${y + 3}">${level}</text>
+                `;
+              }).join('')}
+              ${tournamentRanges.map(range => `
+                <line
+                  class="overall-history-tournament-boundary"
+                  x1="${range.endX}"
+                  y1="${plotTop}"
+                  x2="${range.endX}"
+                  y2="${plotBottom}">
+                </line>
+              `).join('')}
+              ${points.slice(1).map((point, index) => {
+                const previousPoint = points[index];
+                return `
+                  <line
+                    class="overall-history-path ${previousPoint.tier}"
+                    x1="${previousPoint.x}"
+                    y1="${previousPoint.y}"
+                    x2="${point.x}"
+                    y2="${point.y}">
+                  </line>
+                `;
+              }).join('')}
+            </svg>
+            <span class="overall-history-cursor-line" data-overall-history-cursor-line aria-hidden="true"></span>
+            <span class="overall-history-cursor-tooltip" data-overall-history-cursor-tooltip aria-live="polite">
+              <strong data-overall-history-tooltip-overall></strong>
+              <span class="overall-history-result">
+                <span data-overall-history-tooltip-score></span>
+                <span class="result-badge overall-history-outcome" data-overall-history-tooltip-outcome></span>
+              </span>
+            </span>
+            ${points.filter(point => point.isTransition).map(point => `
+              <button
+                class="overall-history-point ${point.tier}"
+                type="button"
+                data-overall-history-index="${point.index}"
+                style="left:${point.xPercent}%;top:${point.y}px"
+                aria-label="Zmiana klasy, OVR ${point.overall}, wynik ${point.score}, ${point.outcome}">
+              </button>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function initializeOverallHistoryInteraction() {
+      const chart = playerDetailEl.querySelector('[data-overall-history-chart]');
+      if (!chart) return;
+
+      let points = [];
+      try {
+        points = JSON.parse(chart.dataset.overallHistoryPoints || '[]');
+      } catch {}
+      if (!points.length) return;
+
+      const cursorLine = chart.querySelector('[data-overall-history-cursor-line]');
+      const tooltip = chart.querySelector('[data-overall-history-cursor-tooltip]');
+      const tooltipOverall = chart.querySelector('[data-overall-history-tooltip-overall]');
+      const tooltipScore = chart.querySelector('[data-overall-history-tooltip-score]');
+      const tooltipOutcome = chart.querySelector('[data-overall-history-tooltip-outcome]');
+      let selectedIndex = points.length - 1;
+
+      const showPoint = rawIndex => {
+        selectedIndex = clamp(Math.round(rawIndex), 0, points.length - 1);
+        const point = points[selectedIndex];
+        const left = `${point.xPercent}%`;
+        cursorLine.style.left = left;
+        tooltip.style.left = left;
+        tooltip.style.setProperty('--history-cursor-y', `${point.y}px`);
+        tooltip.classList.toggle('is-below', point.y < 72);
+        tooltip.classList.toggle('is-left-edge', point.xPercent < 15);
+        tooltip.classList.toggle('is-right-edge', point.xPercent > 85);
+        tooltipOverall.textContent = String(point.overall);
+        tooltipScore.textContent = point.score;
+        const outcome = ['W', 'D', 'L'].includes(point.outcome) ? point.outcome : '';
+        tooltipOutcome.textContent = outcome;
+        tooltipOutcome.className = `result-badge overall-history-outcome ${outcome}`;
+        chart.classList.add('is-inspecting');
+      };
+
+      const indexAtPointer = clientX => {
+        const bounds = chart.getBoundingClientRect();
+        const pointerPercent = clamp(((clientX - bounds.left) / bounds.width) * 100, 0, 100);
+        let nearestIndex = 0;
+        let nearestDistance = Infinity;
+        points.forEach((point, index) => {
+          const distance = Math.abs(point.xPercent - pointerPercent);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+          }
+        });
+        return nearestIndex;
+      };
+
+      chart.addEventListener('pointerdown', event => {
+        if (!event.isPrimary) return;
+        showPoint(indexAtPointer(event.clientX));
+        if (event.pointerType !== 'mouse') {
+          try {
+            chart.setPointerCapture(event.pointerId);
+          } catch {}
+        }
+      });
+      chart.addEventListener('pointermove', event => {
+        if (!event.isPrimary) return;
+        showPoint(indexAtPointer(event.clientX));
+      });
+      chart.addEventListener('pointerleave', event => {
+        if (event.pointerType === 'mouse') chart.classList.remove('is-inspecting');
+      });
+      chart.addEventListener('focus', () => showPoint(selectedIndex));
+      chart.addEventListener('blur', event => {
+        if (!chart.contains(event.relatedTarget)) chart.classList.remove('is-inspecting');
+      });
+      chart.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        showPoint(selectedIndex + (event.key === 'ArrowLeft' ? -1 : 1));
+      });
+
+      chart.querySelectorAll('[data-overall-history-index]').forEach(pointEl => {
+        const pointIndex = Number(pointEl.dataset.overallHistoryIndex);
+        pointEl.addEventListener('mouseenter', () => showPoint(pointIndex));
+        pointEl.addEventListener('focus', () => showPoint(pointIndex));
+        pointEl.addEventListener('click', () => showPoint(pointIndex));
+      });
+    }
+
+    function playerCardMarkup(player, overall = playerAttributes(player.id).overall) {
       const stats = calculateGlobalPlayerStats(player.id);
       const fullName = playerFullName(player);
       return `
         <button class="player-card" type="button" data-player-card="${player.id}">
-          ${playerAvatarMarkup(player)}
+          <strong class="player-card-overall">${overall}</strong>
+          ${playerAvatarMarkup(player, 'player-avatar', '', overall)}
           <span>
             <span class="player-card-name">${escapeHtml(playerNickname(player))}</span>
             ${fullName ? `<span class="player-card-real-name">${escapeHtml(fullName)}</span>` : ''}
-            <span class="player-card-meta">${stats.matches} meczów • ${stats.tournaments} turniejów • ${stats.wins}W ${stats.draws}D ${stats.losses}L</span>
+            <span class="player-card-meta">${stats.matches} meczów • ${stats.tournaments} ${polishTournamentNoun(stats.tournaments)} • ${stats.wins}W ${stats.draws}D ${stats.losses}L</span>
           </span>
           <span class="player-card-arrow">›</span>
         </button>
@@ -4661,7 +5344,14 @@
     function renderPlayerCards() {
       playersCountEl.textContent = String(playerRegistry.length);
       playerCardListEl.innerHTML = playerRegistry.length
-        ? [...playerRegistry].sort((a, b) => playerNickname(a).localeCompare(playerNickname(b), 'pl')).map(playerCardMarkup).join('')
+        ? [...playerRegistry]
+          .map(player => ({ player, overall: playerAttributes(player.id).overall }))
+          .sort((a, b) => (
+            b.overall - a.overall
+            || playerNickname(a.player).localeCompare(playerNickname(b.player), 'pl')
+          ))
+          .map(({ player, overall }) => playerCardMarkup(player, overall))
+          .join('')
         : '<div class="launcher-empty">Nie utworzono jeszcze żadnego zawodnika.</div>';
     }
 
@@ -4714,6 +5404,7 @@
       const cardPortrait = player.photo
         ? `<img src="${escapeHtml(player.photo)}" alt="">`
         : escapeHtml(playerInitials(playerNickname(player)) || '?');
+      const overallHistoryMarkup = playerOverallHistoryMarkup(playerId, stats);
       const visibleRecentMatches = stats.recent.slice(0, playerProfileMatchLimit);
       const recentMarkup = visibleRecentMatches.length
         ? visibleRecentMatches.map(match => `
@@ -4748,7 +5439,7 @@
         `
         : '';
       playerDetailEl.innerHTML = `
-        <div class="fifa-card-stage ${cardTier.className}">
+        <div class="fifa-card-stage ${cardTier.className}${preserveScroll ? '' : ' is-entering'}">
           <svg class="fifa-card-glow" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
             <use class="fifa-card-glow-wide" href="#player-card-outline"></use>
             <use class="fifa-card-glow-near" href="#player-card-outline"></use>
@@ -4763,6 +5454,7 @@
               <div class="fifa-card-stat"><strong>${attributes.attack}</strong><span>ATT</span></div>
               <div class="fifa-card-stat"><strong>${attributes.defence}</strong><span>DEF</span></div>
             </div>
+            <div class="fifa-card-shine" aria-hidden="true"><span></span><span></span></div>
             <svg class="fifa-card-frame" viewBox="0 0 238.12 344" preserveAspectRatio="none" aria-hidden="true">
               <use class="fifa-card-frame-bevel-shadow" href="#player-card-outline"></use>
               <use class="fifa-card-frame-bevel-highlight" href="#player-card-outline"></use>
@@ -4785,10 +5477,10 @@
             </span>
           </span>
         </section>
-        ${stats.matches > 0 ? '<p class="player-delete-note">Zawodnika z historią rozegranych meczów nie można usunąć.</p>' : ''}
+        ${overallHistoryMarkup}
         <section class="player-stats-grid">
           <div class="player-stat-card"><strong>${stats.matches}</strong><span>Rozegrane mecze</span></div>
-          <div class="player-stat-card"><strong>${stats.tournaments}</strong><span>Turnieje</span></div>
+          <div class="player-stat-card"><strong>${stats.tournaments}</strong><span>${polishTournamentNoun(stats.tournaments)}</span></div>
           <div class="player-stat-card"><strong>${stats.wins}</strong><span>Wygrane</span></div>
           <div class="player-stat-card"><strong>${stats.draws}</strong><span>Remisy</span></div>
           <div class="player-stat-card"><strong>${stats.losses}</strong><span>Przegrane</span></div>
@@ -4798,9 +5490,10 @@
         ${loadMoreMarkup}
       `;
       showLauncherSubview(launcherPlayerDetailEl);
-      if (preserveScroll) {
-        window.requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
-      }
+      initializeOverallHistoryInteraction();
+      window.requestAnimationFrame(() => {
+        if (preserveScroll) window.scrollTo(0, previousScrollY);
+      });
     }
 
     function openTournamentPlayerProfile(playerId, source) {
@@ -6159,13 +6852,20 @@
 
     function renderStandings() {
       const standings = buildStandings();
+      const finishedOverallSnapshot = finishedTournamentOverallSnapshot(currentTournamentMeta);
       standingsEl.innerHTML = standings.map((player, index) => {
         const balance = player.goalsFor - player.goalsAgainst;
         const balanceLabel = balance > 0 ? `+${balance}` : String(balance);
         const playerId = tournamentPlayerId(currentTournamentMeta, player.name);
         const registryEntry = registryPlayer(playerId);
+        const finishedOverall = Number(finishedOverallSnapshot?.[playerId]);
         const avatar = registryEntry
-          ? playerAvatarMarkup(registryEntry, 'player-avatar standings-avatar')
+          ? playerAvatarMarkup(
+            registryEntry,
+            'player-avatar standings-avatar',
+            '',
+            Number.isFinite(finishedOverall) ? finishedOverall : null
+          )
           : `<span class="player-avatar standings-avatar tier-avatar is-bronze">${escapeHtml(playerInitials(displayPlayerName(player.name)))}</span>`;
         return `
           <tr>
@@ -6204,6 +6904,7 @@
     }
 
     function renderSettingsForm() {
+      tournamentNameInput.value = currentTournamentMeta?.name || '';
       matchMinutesInput.value = String(settings.matchDuration / 60);
       countdownSecondsInput.value = String(settings.countdownDuration);
       playerCountSelect.value = String(settings.playerCount);
@@ -6809,6 +7510,28 @@
       return true;
     }
 
+    function applyTournamentNameFromForm() {
+      if (!currentTournamentMeta) return false;
+      const tournamentName = tournamentNameInput.value.trim();
+      if (!tournamentName) {
+        tournamentNameInput.value = currentTournamentMeta.name;
+        showSettingsError('Nazwa turnieju nie może być pusta.');
+        return false;
+      }
+      if (tournamentName === currentTournamentMeta.name) {
+        clearSettingsError();
+        return true;
+      }
+
+      currentTournamentMeta.name = tournamentName;
+      currentTournamentMeta.updatedAt = Date.now();
+      tournamentTitleEl.textContent = tournamentName;
+      saveTournamentRegistry();
+      renderTournamentLauncher();
+      clearSettingsError();
+      return true;
+    }
+
     function applySettingsFromForm() {
       settings = normalizeSettings({
         matchDuration: Number(matchMinutesInput.value) * 60,
@@ -6863,6 +7586,7 @@
     });
 
     startMatchButton.addEventListener('click', startMatchTimer);
+    testMatchSoundButton.addEventListener('click', playMatchWhistle);
     pauseMatchButton.addEventListener('click', pauseMatchTimer);
     resetMatchButton.addEventListener('click', resetMatchTimer);
     backToMenuButton.addEventListener('click', returnToMenu);
@@ -6887,10 +7611,20 @@
       if (canLeavePlayerEditor()) setSettingsView('main');
     });
     editPlayersButton.addEventListener('click', () => setSettingsView('players'));
-    settingsFormEl.addEventListener('submit', event => event.preventDefault());
+    deleteTournamentButton.addEventListener('click', () => {
+      if (currentTournamentMeta) deleteTournament(currentTournamentMeta.id);
+    });
+    settingsFormEl.addEventListener('submit', event => {
+      event.preventDefault();
+      applyTournamentNameFromForm();
+    });
     settingsPanelEl.addEventListener('click', event => {
       if (event.target === settingsPanelEl) closeSettings();
     });
+    tournamentNameInput.addEventListener('input', () => {
+      if (tournamentNameInput.value.trim()) applyTournamentNameFromForm();
+    });
+    tournamentNameInput.addEventListener('change', applyTournamentNameFromForm);
     matchMinutesInput.addEventListener('change', applySettingsFromForm);
     countdownSecondsInput.addEventListener('change', applySettingsFromForm);
     playerCountSelect.addEventListener('change', applySettingsFromForm);
@@ -7006,11 +7740,6 @@
     document.querySelector('#tournaments-home').addEventListener('click', showTournamentLauncher);
 
     launcherEl.addEventListener('click', event => {
-      const deleteTournamentButton = event.target.closest('[data-delete-tournament-id]');
-      if (deleteTournamentButton) {
-        deleteTournament(deleteTournamentButton.dataset.deleteTournamentId);
-        return;
-      }
       const loadMorePlayerMatchesButton = event.target.closest('[data-load-more-player-matches]');
       if (loadMorePlayerMatchesButton) {
         playerProfileMatchLimit += 10;
@@ -7171,6 +7900,9 @@
         ? `Zapisano ${complete} z ${matches.length} wyników. Mimo to zakończyć turniej?`
         : 'Zakończyć turniej i przenieść go do archiwum?';
       if (!window.confirm(confirmation)) return;
+      currentTournamentMeta.finishedCardOverallSnapshot = currentPlayerOverallSnapshot(
+        currentTournamentMeta.playerIds
+      );
       currentTournamentMeta.finishedAt = Date.now();
       currentTournamentMeta.updatedAt = Date.now();
       saveTournamentRegistry();
@@ -7179,6 +7911,7 @@
 
     restoreTournamentButton.addEventListener('click', () => {
       if (!currentTournamentMeta) return;
+      delete currentTournamentMeta.finishedCardOverallSnapshot;
       currentTournamentMeta.finishedAt = null;
       currentTournamentMeta.updatedAt = Date.now();
       saveTournamentRegistry();
